@@ -1,0 +1,339 @@
+---
+title: "Epidural Analysis"
+author: "Whitney Knauer"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| echo: false
+
+library(epiDisplay)
+library(knitr)
+library(pROC)
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(gmodels)
+library(ggbeeswarm)
+library(dplyr)
+library(ggpubr)
+library(psych)
+library(lme4)
+library(Matrix)
+library(lmerTest)
+library(irr)
+library(lmerTest)
+library(emmeans)
+library(doBy)       
+library(gmodels)    
+library(car)           
+library(cowplot)       
+library(gridGraphics)  
+library(multcomp)
+library(hms)
+library(gt)
+library(fuzzyjoin)
+library(lubridate)
+library(data.table)
+```
+
+```{r}
+#|warning: false
+#|echo: false
+#|include: false
+
+
+s1 <- read_csv('data/Bovine Epidural survey 1_July 9, 2025_15.04.csv')
+s1 <- s1 |> 
+  mutate(
+    exp = case_when(
+      grepl("^Not at all", Q8) ~ "None",
+      grepl("Observed", Q8) & !grepl("Performed", Q8) ~ "Observed",
+      grepl("Performed", Q8) ~ "Performed",
+      TRUE ~ NA_character_
+    )
+  )
+
+s2 <- read_csv('data/Bovine Epidural survey 2_July 9, 2025_15.09.csv')
+s2 <- s2 |> 
+  mutate(
+    exp = case_when(
+      grepl("^Not at all", Q8) ~ "None",
+      grepl("Observed", Q8) & !grepl("Performed", Q8) ~ "Observed",
+      grepl("Performed", Q8) ~ "Performed",
+      TRUE ~ NA_character_
+    )
+  )
+s2$year <- as.factor(s2$year)
+s2<- s2 |> 
+  mutate(
+    exp10 = case_when(
+      exp == "None"  ~ "none",
+      exp == "Observed" ~ "some",
+      exp == "Performed" ~ "some"))
+
+
+
+prewide <- read_csv('data/prepostwide.csv')
+prewide <- prewide |> 
+  mutate(
+    exp = case_when(
+      grepl("^Not at all", Q8pre) ~ "None",
+      grepl("Observed", Q8pre) & !grepl("Performed", Q8pre) ~ "Observed",
+      grepl("Performed", Q8pre) ~ "Performed",
+      TRUE ~ NA_character_
+    )
+  )
+
+#Making stuff numeric so we can calculate a delta
+prewide<-prewide |> 
+  mutate(
+    Q10prenum = case_when(
+      Q10pre == "Strongly disagree"         ~ 1, 
+      Q10pre == "Somewhat disagree"         ~ 2, 
+      Q10pre == "Neither agree nor disagree" ~ 3, 
+      Q10pre == "Somewhat agree"            ~ 4, 
+      Q10pre == "Strongly agree"            ~ 5
+    )
+  )
+
+prewide<-prewide |> 
+  mutate(
+    Q10postnum = case_when(
+      Q10post == "Strongly disagree"         ~ 1, 
+      Q10post == "Somewhat disagree"         ~ 2, 
+      Q10post == "Neither agree nor disagree" ~ 3, 
+      Q10post == "Somewhat agree"            ~ 4, 
+      Q10post == "Strongly agree"            ~ 5
+    )
+  )
+
+prewide<-prewide |> 
+  mutate(
+    Q10delta = Q10postnum - Q10prenum
+  )
+
+prewide<-prewide |> 
+  mutate(
+    Q11prenum = case_when(
+      Q11pre == "Strongly disagree"         ~ 1, 
+      Q11pre == "Somewhat disagree"         ~ 2, 
+      Q11pre == "Neither agree nor disagree" ~ 3, 
+      Q11pre == "Somewhat agree"            ~ 4, 
+      Q11pre == "Strongly agree"            ~ 5
+    )
+  )
+
+prewide<-prewide |> 
+  mutate(
+    Q11postnum = case_when(
+      Q11post == "Strongly disagree"         ~ 1, 
+      Q11post == "Somewhat disagree"         ~ 2, 
+      Q11post == "Neither agree nor disagree" ~ 3, 
+      Q11post == "Somewhat agree"            ~ 4, 
+      Q11post == "Strongly agree"            ~ 5
+    )
+  )
+
+prewide<-prewide |> 
+  mutate(
+    Q11delta = Q11postnum - Q11prenum
+  )
+
+
+prelong <- read_csv('data/prepostlong.csv')
+prelong <- prelong |> 
+  mutate(
+    exp = case_when(
+      grepl("^Not at all", Q8) ~ "None",
+      grepl("Observed", Q8) & !grepl("Performed", Q8) ~ "Observed",
+      grepl("Performed", Q8) ~ "Performed",
+      TRUE ~ NA_character_
+    )
+  )
+
+both <- read_csv('data/prepostlongboth.csv')
+both<- both |> 
+    mutate(
+    exp = case_when(
+      grepl("^Not at all", Q8) ~ "None",
+      grepl("Observed", Q8) & !grepl("Performed", Q8) ~ "Observed",
+      grepl("Performed", Q8) ~ "Performed",
+      TRUE ~ NA_character_
+    )
+  )
+both$year <- as.factor(both$year)
+both<- both |> 
+  mutate(
+    exp10 = case_when(
+      exp == "None"  ~ "none",
+      exp == "Observed" ~ "some",
+      exp == "Performed" ~ "some"))
+  
+
+```
+
+## Some Description of the Data/Participants
+
+```{r}
+
+table(s1$year)
+table(s2$year)
+
+table(prelong$prepost, prelong$year)
+
+table(prewide$year)
+
+
+```
+
+Students who completed the pre-survey (n=37 in 2024; n=33 in 2025)
+
+Students who completed the post-survey (n=24 in 2024; n=31 in 2025; who completed post but not pre? pre but not post?)
+
+Students who completed both: 24 in 2024 and 28 in 2025.
+
+## Student Experience with Epidurals
+
+```{r}
+
+table(s1$Q8)
+table(s1$exp)
+table(s1$Q10)
+unique(s1$Q10)
+
+
+table(s1$Q11)
+table(s1$Q12)
+
+```
+
+## Delta Change in Attitude and change model
+
+```{r}
+#When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
+table (prewide$Q10prenum)
+table(prewide$Q10postnum)
+table(prewide$Q10delta)
+
+
+#When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
+table (prewide$Q11prenum)
+table(prewide$Q11postnum)
+table(prewide$Q11delta)
+
+#using the long format, with only students who completed both the pre and post survey (n=52 students)
+#Q10 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
+table(both$Q10)
+table(both$Q10, both$year)
+table(both$Q10, both$exp)
+table(both$Q10, both$exp10)
+
+#yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural under supervision.
+both$Q10 <- factor(both$Q10, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q10~ prepost, data = both, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
+
+#Q11 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
+table(both$Q11)
+table(both$Q11, both$year)
+table(both$Q11, both$prepost)
+
+#yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural unsupervised.
+both$Q11 <- factor(both$Q11, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q11~ prepost, data = both, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
+
+
+```
+
+## Post Survey
+
+```{r}
+
+#10a The epidural model is a useful tool for the acquisition of skills required to complete an epidural injection on a bovine.
+table(s2$Q10a)
+table(s2$Q10a, s2$year)
+table(s2$Q10a, s2$exp)
+table(s2$Q10a, s2$exp10)
+
+
+#year, no difference. Experience (either observing or performing) sig (less likely to be in a higher category)
+s2$Q10a <- factor(s2$Q10a, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q10a~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
+
+#11a The use of the model has reinforced my previous learning.
+table(s2$Q11a)
+table(s2$Q11a, s2$year)
+table(s2$Q11a, s2$exp)
+
+s2$Q11a <- factor(s2$Q11a, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q11a~ as.factor(year), data = s2, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
+#12 The use of the model has duplicated my previous learning.
+table(s2$Q12)
+table(s2$Q12, s2$year)
+
+s2$Q12 <- factor(s2$Q12, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q12~ as.factor(year), data = s2, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
+#13 My range of manual dexterity skills have increased as a result of using this epidural model.
+table(s2$Q13)
+
+#14 My manual dexterity skills have improved as a result of using this epidural model.
+table(s2$Q14)
+
+#Q15 I received feedback from an instructor after I used the epidural model.
+table(s2$Q15)
+
+#16 As a result of using the model, I now feel more confident to perform an epidural injection on a bovine.
+table(s2$Q16)
+
+#17 The skills I have learnt using the model will be valuable to me during my clinical year.
+table(s2$Q17)
+
+
+
+
+
+
+```
