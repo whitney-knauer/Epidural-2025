@@ -11,7 +11,7 @@
 
 <meta name="author" content="Whitney Knauer" />
 
-<meta name="date" content="2025-07-11" />
+<meta name="date" content="2025-07-22" />
 
 <title>Epidural Analysis</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Epidural Analysis</h1>
 <h4 class="author">Whitney Knauer</h4>
-<h4 class="date">2025-07-11</h4>
+<h4 class="date">2025-07-22</h4>
 
 </div>
 
@@ -371,7 +371,7 @@ s1 &lt;- read_csv(&#39;data/Bovine Epidural survey 1_July 9, 2025_15.04.csv&#39;
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>s1 &lt;- s1 %&gt;%
+<pre class="r"><code>s1 &lt;- s1 |&gt; 
   mutate(
     exp = case_when(
       grepl(&quot;^Not at all&quot;, Q8) ~ &quot;None&quot;,
@@ -390,7 +390,7 @@ s2 &lt;- read_csv(&#39;data/Bovine Epidural survey 2_July 9, 2025_15.09.csv&#39;
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>s2 &lt;- s2 %&gt;%
+<pre class="r"><code>s2 &lt;- s2 |&gt; 
   mutate(
     exp = case_when(
       grepl(&quot;^Not at all&quot;, Q8) ~ &quot;None&quot;,
@@ -400,6 +400,14 @@ s2 &lt;- read_csv(&#39;data/Bovine Epidural survey 2_July 9, 2025_15.09.csv&#39;
     )
   )
 s2$year &lt;- as.factor(s2$year)
+s2&lt;- s2 |&gt; 
+  mutate(
+    exp10 = case_when(
+      exp == &quot;None&quot;  ~ &quot;none&quot;,
+      exp == &quot;Observed&quot; ~ &quot;some&quot;,
+      exp == &quot;Performed&quot; ~ &quot;some&quot;))
+
+
 
 prewide &lt;- read_csv(&#39;data/prepostwide.csv&#39;)</code></pre>
 <pre><code>## Rows: 52 Columns: 11
@@ -477,15 +485,15 @@ prewide&lt;-prewide |&gt;
 
 
 prelong &lt;- read_csv(&#39;data/prepostlong.csv&#39;)</code></pre>
-<pre><code>## Rows: 125 Columns: 8
+<pre><code>## Rows: 125 Columns: 10
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (6): prepost, Q5, Q6, Q8, Q10, Q11
-## dbl (2): year, StudID
+## dbl (4): year, StudID, Prenopost, Postnopre
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>prelong &lt;- prelong %&gt;%
+<pre class="r"><code>prelong &lt;- prelong |&gt; 
   mutate(
     exp = case_when(
       grepl(&quot;^Not at all&quot;, Q8) ~ &quot;None&quot;,
@@ -493,7 +501,33 @@ prelong &lt;- read_csv(&#39;data/prepostlong.csv&#39;)</code></pre>
       grepl(&quot;Performed&quot;, Q8) ~ &quot;Performed&quot;,
       TRUE ~ NA_character_
     )
-  )</code></pre>
+  )
+
+both &lt;- read_csv(&#39;data/prepostlongboth.csv&#39;)</code></pre>
+<pre><code>## Rows: 104 Columns: 8
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (6): prepost, Q5, Q6, Q8, Q10, Q11
+## dbl (2): year, StudID
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>both&lt;- both |&gt; 
+    mutate(
+    exp = case_when(
+      grepl(&quot;^Not at all&quot;, Q8) ~ &quot;None&quot;,
+      grepl(&quot;Observed&quot;, Q8) &amp; !grepl(&quot;Performed&quot;, Q8) ~ &quot;Observed&quot;,
+      grepl(&quot;Performed&quot;, Q8) ~ &quot;Performed&quot;,
+      TRUE ~ NA_character_
+    )
+  )
+both$year &lt;- as.factor(both$year)
+both&lt;- both |&gt; 
+  mutate(
+    exp10 = case_when(
+      exp == &quot;None&quot;  ~ &quot;none&quot;,
+      exp == &quot;Observed&quot; ~ &quot;some&quot;,
+      exp == &quot;Performed&quot; ~ &quot;some&quot;))</code></pre>
 <div id="some-description-of-the-dataparticipants" class="section level2">
 <h2>Some Description of the Data/Participants</h2>
 <pre class="r"><code>table(s1$year)</code></pre>
@@ -513,11 +547,26 @@ prelong &lt;- read_csv(&#39;data/prepostlong.csv&#39;)</code></pre>
 <pre><code>## 
 ## 24 25 
 ## 24 28</code></pre>
+<pre class="r"><code>table (prelong$Prenopost, prelong$year)</code></pre>
+<pre><code>##    
+##     24 25
+##   0 48 59
+##   1 13  5</code></pre>
+<pre class="r"><code>table (prelong$Postnopre, prelong$year)</code></pre>
+<pre><code>##    
+##     24 25
+##   0 61 61
+##   1  0  3</code></pre>
 <p>Students who completed the pre-survey (n=37 in 2024; n=33 in
 2025)</p>
-<p>Students who completed the post-survey (n=24 in 2024; n=31 in 2025;
-who completed post but not pre? pre but not post?)</p>
-<p>Students who completed both: 24 in 2024 and 28 in 2025.</p>
+<p>Students who completed the post-survey (n=24 in 2024; n=31 in
+2025)</p>
+<p>Students who complete pre but not post survey (n=13 in 2024; n=5 in
+2025)</p>
+<p>Students who completed the post survey but not the pre (n=0 in 2024;
+n=3 in 2025)</p>
+<p>Students who completed both: 24 in 2024 and 28 in 2025 (n=52 complete
+surveys).</p>
 </div>
 <div id="student-experience-with-epidurals" class="section level2">
 <h2>Student Experience with Epidurals</h2>
@@ -566,8 +615,8 @@ who completed post but not pre? pre but not post?)</p>
 ## Somewhat agree Strongly agree 
 ##             15             55</code></pre>
 </div>
-<div id="delta-change-in-attitude" class="section level2">
-<h2>Delta Change in Attitude</h2>
+<div id="delta-change-in-attitude-and-change-model" class="section level2">
+<h2>Delta Change in Attitude and Change Model</h2>
 <pre class="r"><code>#When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
 table (prewide$Q10prenum)</code></pre>
 <pre><code>## 
@@ -594,6 +643,129 @@ table (prewide$Q11prenum)</code></pre>
 <pre><code>## 
 ##  0  1  2  3  4 
 ## 10  7 10 23  2</code></pre>
+<pre class="r"><code>#using the long format, with only students who completed both the pre and post survey (n=52 students)
+#Q10 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
+table(both$Q10)</code></pre>
+<pre><code>## 
+## Neither agree nor disagree             Somewhat agree 
+##                          6                         17 
+##          Somewhat disagree             Strongly agree 
+##                         15                         64 
+##          Strongly disagree 
+##                          2</code></pre>
+<pre class="r"><code>table(both$Q10, both$year)</code></pre>
+<pre><code>##                             
+##                              24 25
+##   Neither agree nor disagree  3  3
+##   Somewhat agree              8  9
+##   Somewhat disagree           7  8
+##   Strongly agree             29 35
+##   Strongly disagree           1  1</code></pre>
+<pre class="r"><code>table(both$Q10, both$exp)</code></pre>
+<pre><code>##                             
+##                              None Observed Performed
+##   Neither agree nor disagree    5        1         0
+##   Somewhat agree                9        7         1
+##   Somewhat disagree            13        2         0
+##   Strongly agree               28       12        24
+##   Strongly disagree             2        0         0</code></pre>
+<pre class="r"><code>table(both$Q10, both$exp10)</code></pre>
+<pre><code>##                             
+##                              none some
+##   Neither agree nor disagree    5    1
+##   Somewhat agree                9    8
+##   Somewhat disagree            13    2
+##   Strongly agree               28   36
+##   Strongly disagree             2    0</code></pre>
+<pre class="r"><code>#yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural under supervision.
+both$Q10 &lt;- factor(both$Q10, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q10~ prepost, data = both, Hess=TRUE)
+ctable &lt;- coef(summary(model))
+p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
+(ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
+<pre><code>##                                                 Value Std. Error   t value
+## prepostpre                                  -2.900836  0.5597024 -5.182818
+## Strongly disagree|Somewhat disagree         -6.054866  0.8708755 -6.952620
+## Somewhat disagree|Neither agree or disagree -3.528960  0.5414023 -6.518184
+## Neither agree or disagree|Somewhat agree    -3.528903  0.5413990 -6.518120
+## Somewhat agree|Strongly agree               -2.272677  0.4692918 -4.842780
+##                                                  p value
+## prepostpre                                  2.185587e-07
+## Strongly disagree|Somewhat disagree         3.585643e-12
+## Somewhat disagree|Neither agree or disagree 7.116349e-11
+## Neither agree or disagree|Somewhat agree    7.119419e-11
+## Somewhat agree|Strongly agree               1.280353e-06</code></pre>
+<pre class="r"><code>(ci &lt;- confint(model))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre><code>##     2.5 %    97.5 % 
+## -4.102544 -1.875532</code></pre>
+<pre class="r"><code>confint.default(model)</code></pre>
+<pre><code>##                2.5 %    97.5 %
+## prepostpre -3.997832 -1.803839</code></pre>
+<pre class="r"><code>exp(coef(model))</code></pre>
+<pre><code>## prepostpre 
+## 0.05497726</code></pre>
+<pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
+<pre><code>##                OR         ci
+## 2.5 %  0.05497726 0.01653058
+## 97.5 % 0.05497726 0.15327333</code></pre>
+<pre class="r"><code>#Q11 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
+table(both$Q11)</code></pre>
+<pre><code>## 
+## Neither agree nor disagree             Somewhat agree 
+##                          7                         41 
+##          Somewhat disagree             Strongly agree 
+##                         11                         18 
+##          Strongly disagree 
+##                         27</code></pre>
+<pre class="r"><code>table(both$Q11, both$year)</code></pre>
+<pre><code>##                             
+##                              24 25
+##   Neither agree nor disagree  0  7
+##   Somewhat agree             20 21
+##   Somewhat disagree           6  5
+##   Strongly agree              9  9
+##   Strongly disagree          13 14</code></pre>
+<pre class="r"><code>table(both$Q11, both$prepost)</code></pre>
+<pre><code>##                             
+##                              post pre
+##   Neither agree nor disagree    4   3
+##   Somewhat agree               32   9
+##   Somewhat disagree             2   9
+##   Strongly agree               14   4
+##   Strongly disagree             0  27</code></pre>
+<pre class="r"><code>#yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural unsupervised.
+both$Q11 &lt;- factor(both$Q11, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q11~ prepost, data = both, Hess=TRUE)
+ctable &lt;- coef(summary(model))
+p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
+(ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
+<pre><code>##                                                  Value Std. Error   t value
+## prepostpre                                  -3.2273257  0.5395642 -5.981356
+## Strongly disagree|Somewhat disagree         -3.1055284  0.4983192 -6.232006
+## Somewhat disagree|Neither agree or disagree -2.2272437  0.4376009 -5.089669
+## Neither agree or disagree|Somewhat agree    -2.2271872  0.4375963 -5.089593
+## Somewhat agree|Strongly agree                0.6871658  0.2925103  2.349202
+##                                                  p value
+## prepostpre                                  2.212872e-09
+## Strongly disagree|Somewhat disagree         4.605007e-10
+## Somewhat disagree|Neither agree or disagree 3.586888e-07
+## Neither agree or disagree|Somewhat agree    3.588335e-07
+## Somewhat agree|Strongly agree               1.881370e-02</code></pre>
+<pre class="r"><code>(ci &lt;- confint(model))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre><code>##     2.5 %    97.5 % 
+## -4.369415 -2.232663</code></pre>
+<pre class="r"><code>confint.default(model)</code></pre>
+<pre><code>##                2.5 %    97.5 %
+## prepostpre -4.284852 -2.169799</code></pre>
+<pre class="r"><code>exp(coef(model))</code></pre>
+<pre><code>## prepostpre 
+## 0.03966343</code></pre>
+<pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
+<pre><code>##                OR         ci
+## 2.5 %  0.03966343 0.01265865
+## 97.5 % 0.03966343 0.10724249</code></pre>
 </div>
 <div id="post-survey" class="section level2">
 <h2>Post Survey</h2>
@@ -611,37 +783,56 @@ table(s2$Q10a)</code></pre>
 ##   Somewhat agree              6 14
 ##   Somewhat disagree           2  1
 ##   Strongly agree             16 13</code></pre>
-<pre class="r"><code>s2$Q10a &lt;- factor(s2$Q10a, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
-model &lt;- polr(Q10a~ as.factor(year), data = s2, Hess=TRUE)
+<pre class="r"><code>table(s2$Q10a, s2$exp)</code></pre>
+<pre><code>##                             
+##                              None Observed Performed
+##   Neither agree nor disagree    1        1         1
+##   Somewhat agree                9        6         5
+##   Somewhat disagree             0        1         2
+##   Strongly agree               22        2         5</code></pre>
+<pre class="r"><code>table(s2$Q10a, s2$exp10)</code></pre>
+<pre><code>##                             
+##                              none some
+##   Neither agree nor disagree    1    2
+##   Somewhat agree                9   11
+##   Somewhat disagree             0    3
+##   Strongly agree               22    7</code></pre>
+<pre class="r"><code>#year, no difference. Experience (either observing or performing) sig (less likely to be in a higher category)
+s2$Q10a &lt;- factor(s2$Q10a, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q10a~ as.factor(year) + exp10, data = s2, Hess=TRUE)
 ctable &lt;- coef(summary(model))
 p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
 (ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
 <pre><code>##                                                   Value Std. Error    t value
-## as.factor(year)25                            -0.6840285  0.5654520 -1.2097022
-## Strongly disagree|Somewhat disagree         -12.2337417 46.9500741 -0.2605692
-## Somewhat disagree|Neither agree or disagree  -3.2253879  0.7055522 -4.5714378
-## Neither agree or disagree|Somewhat agree     -3.2252574  0.7055234 -4.5714396
-## Somewhat agree|Strongly agree                -0.6223450  0.4358402 -1.4279202
+## as.factor(year)25                            -0.7555351  0.6084223 -1.2417939
+## exp10some                                    -1.7576155  0.6153539 -2.8562676
+## Strongly disagree|Somewhat disagree         -13.4209863 44.8300963 -0.2993745
+## Somewhat disagree|Neither agree or disagree  -4.2982346  0.8712768 -4.9332597
+## Neither agree or disagree|Somewhat agree     -4.2981060  0.8712543 -4.9332392
+## Somewhat agree|Strongly agree                -1.3719002  0.5536330 -2.4779958
 ##                                                  p value
-## as.factor(year)25                           2.263932e-01
-## Strongly disagree|Somewhat disagree         7.944248e-01
-## Somewhat disagree|Neither agree or disagree 4.843890e-06
-## Neither agree or disagree|Somewhat agree    4.843850e-06
-## Somewhat agree|Strongly agree               1.533148e-01</code></pre>
+## as.factor(year)25                           2.143126e-01
+## exp10some                                   4.286536e-03
+## Strongly disagree|Somewhat disagree         7.646543e-01
+## Somewhat disagree|Neither agree or disagree 8.086851e-07
+## Neither agree or disagree|Somewhat agree    8.087700e-07
+## Somewhat agree|Strongly agree               1.321227e-02</code></pre>
 <pre class="r"><code>(ci &lt;- confint(model))</code></pre>
 <pre><code>## Waiting for profiling to be done...</code></pre>
-<pre><code>##      2.5 %     97.5 % 
-## -1.8214023  0.4115964</code></pre>
+<pre><code>##                       2.5 %     97.5 %
+## as.factor(year)25 -1.996444  0.4140012
+## exp10some         -3.025151 -0.5911150</code></pre>
 <pre class="r"><code>confint.default(model)</code></pre>
-<pre><code>##                       2.5 %   97.5 %
-## as.factor(year)25 -1.792294 0.424237</code></pre>
+<pre><code>##                       2.5 %     97.5 %
+## as.factor(year)25 -1.948021  0.4369506
+## exp10some         -2.963687 -0.5515440</code></pre>
 <pre class="r"><code>exp(coef(model))</code></pre>
-<pre><code>## as.factor(year)25 
-##         0.5045802</code></pre>
+<pre><code>## as.factor(year)25         exp10some 
+##         0.4697592         0.1724556</code></pre>
 <pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
-<pre><code>##               OR        ci
-## 2.5 %  0.5045802 0.1617987
-## 97.5 % 0.5045802 1.5092253</code></pre>
+<pre><code>##                          OR     2.5 %    97.5 %
+## as.factor(year)25 0.4697592 0.1358174 1.5128590
+## exp10some         0.1724556 0.0485505 0.5537096</code></pre>
 <pre class="r"><code>#11a The use of the model has reinforced my previous learning.
 table(s2$Q11a)</code></pre>
 <pre><code>## 
@@ -649,6 +840,57 @@ table(s2$Q11a)</code></pre>
 ##                          5                         23 
 ##          Somewhat disagree             Strongly agree 
 ##                          1                         26</code></pre>
+<pre class="r"><code>table(s2$Q11a, s2$year)</code></pre>
+<pre><code>##                             
+##                              24 25
+##   Neither agree nor disagree  2  3
+##   Somewhat agree              8 15
+##   Somewhat disagree           1  0
+##   Strongly agree             13 13</code></pre>
+<pre class="r"><code>table(s2$Q11a, s2$exp)</code></pre>
+<pre><code>##                             
+##                              None Observed Performed
+##   Neither agree nor disagree    2        1         2
+##   Somewhat agree               13        6         4
+##   Somewhat disagree             0        0         1
+##   Strongly agree               17        3         6</code></pre>
+<pre class="r"><code>#year no difference, experience no difference
+s2$Q11a &lt;- factor(s2$Q11a, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q11a~ as.factor(year) + exp10, data = s2, Hess=TRUE)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>ctable &lt;- coef(summary(model))
+p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
+(ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
+<pre><code>##                                                   Value Std. Error    t value
+## as.factor(year)25                            -0.4076803  0.5765301 -0.7071275
+## exp10some                                    -0.5504491  0.5815666 -0.9464936
+## Strongly disagree|Somewhat disagree         -12.1594323 48.5430359 -0.2504877
+## Somewhat disagree|Neither agree or disagree  -4.3961751  1.1158071 -3.9399059
+## Neither agree or disagree|Somewhat agree     -4.3958073  1.1156462 -3.9401444
+## Somewhat agree|Strongly agree                -0.5305074  0.4980845 -1.0650953
+##                                                  p value
+## as.factor(year)25                           4.794873e-01
+## exp10some                                   3.438969e-01
+## Strongly disagree|Somewhat disagree         8.022102e-01
+## Somewhat disagree|Neither agree or disagree 8.151357e-05
+## Neither agree or disagree|Somewhat agree    8.143256e-05
+## Somewhat agree|Strongly agree               2.868328e-01</code></pre>
+<pre class="r"><code>(ci &lt;- confint(model))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.560461 0.7166478
+## exp10some         -1.712857 0.5847448</code></pre>
+<pre class="r"><code>confint.default(model)</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.537659 0.7222980
+## exp10some         -1.690299 0.5894005</code></pre>
+<pre class="r"><code>exp(coef(model))</code></pre>
+<pre><code>## as.factor(year)25         exp10some 
+##         0.6651915         0.5766907</code></pre>
+<pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
+<pre><code>##                          OR     2.5 %   97.5 %
+## as.factor(year)25 0.6651915 0.2100391 2.047558
+## exp10some         0.5766907 0.1803499 1.794533</code></pre>
 <pre class="r"><code>#12 The use of the model has duplicated my previous learning.
 table(s2$Q12)</code></pre>
 <pre><code>## 
@@ -658,6 +900,58 @@ table(s2$Q12)</code></pre>
 ##                          7                         11 
 ##          Strongly disagree 
 ##                          2</code></pre>
+<pre class="r"><code>table(s2$Q12, s2$exp10)</code></pre>
+<pre><code>##                             
+##                              none some
+##   Neither agree nor disagree   12    6
+##   Somewhat agree                9    8
+##   Somewhat disagree             4    3
+##   Strongly agree                6    5
+##   Strongly disagree             1    1</code></pre>
+<pre class="r"><code>table(s2$Q12, s2$year)</code></pre>
+<pre><code>##                             
+##                              24 25
+##   Neither agree nor disagree  8 10
+##   Somewhat agree              8  9
+##   Somewhat disagree           1  6
+##   Strongly agree              6  5
+##   Strongly disagree           1  1</code></pre>
+<pre class="r"><code>#not year, not experience sig
+s2$Q12 &lt;- factor(s2$Q12, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q12~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable &lt;- coef(summary(model))
+p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
+(ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
+<pre><code>##                                                   Value Std. Error     t value
+## as.factor(year)25                           -0.83451784  0.6358615 -1.31242080
+## exp10some                                    0.03301129  0.6154878  0.05363435
+## Strongly disagree|Somewhat disagree         -3.40484265  0.8913460 -3.81988905
+## Somewhat disagree|Neither agree or disagree -1.63874877  0.6251088 -2.62154188
+## Neither agree or disagree|Somewhat agree    -1.63871894  0.6251063 -2.62150429
+## Somewhat agree|Strongly agree                0.44713940  0.5531874  0.80829647
+##                                                  p value
+## as.factor(year)25                           0.1893781932
+## exp10some                                   0.9572264850
+## Strongly disagree|Somewhat disagree         0.0001335117
+## Somewhat disagree|Neither agree or disagree 0.0087533008
+## Neither agree or disagree|Somewhat agree    0.0087542662
+## Somewhat agree|Strongly agree               0.4189199326</code></pre>
+<pre class="r"><code>(ci &lt;- confint(model))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -2.121711 0.3918444
+## exp10some         -1.180346 1.2500758</code></pre>
+<pre class="r"><code>confint.default(model)</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -2.080783 0.4117478
+## exp10some         -1.173323 1.2393452</code></pre>
+<pre class="r"><code>exp(coef(model))</code></pre>
+<pre><code>## as.factor(year)25         exp10some 
+##         0.4340837         1.0335622</code></pre>
+<pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
+<pre><code>##                          OR     2.5 %   97.5 %
+## as.factor(year)25 0.4340837 0.1198265 1.479708
+## exp10some         1.0335622 0.3071725 3.490608</code></pre>
 <pre class="r"><code>#13 My range of manual dexterity skills have increased as a result of using this epidural model.
 table(s2$Q13)</code></pre>
 <pre><code>## 
@@ -665,6 +959,56 @@ table(s2$Q13)</code></pre>
 ##                         20                         21 
 ##          Somewhat disagree             Strongly agree 
 ##                          2                         12</code></pre>
+<pre class="r"><code>table(s2$Q13, s2$year)</code></pre>
+<pre><code>##                             
+##                              24 25
+##   Neither agree nor disagree  7 13
+##   Somewhat agree              9 12
+##   Somewhat disagree           1  1
+##   Strongly agree              7  5</code></pre>
+<pre class="r"><code>table(s2$Q13, s2$exp)</code></pre>
+<pre><code>##                             
+##                              None Observed Performed
+##   Neither agree nor disagree   10        5         5
+##   Somewhat agree               12        4         5
+##   Somewhat disagree             2        0         0
+##   Strongly agree                8        1         3</code></pre>
+<pre class="r"><code>#not year, not experience
+s2$Q13 &lt;- factor(s2$Q13, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q13~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable &lt;- coef(summary(model))
+p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
+(ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
+<pre><code>##                                                   Value Std. Error    t value
+## as.factor(year)25                            -0.5287207  0.6990164 -0.7563781
+## exp10some                                     0.1288636  0.7101681  0.1814551
+## Strongly disagree|Somewhat disagree         -11.9003599 56.9436302 -0.2089849
+## Somewhat disagree|Neither agree or disagree  -3.0567919  0.8630015 -3.5420471
+## Neither agree or disagree|Somewhat agree     -3.0566389  0.8629605 -3.5420379
+## Somewhat agree|Strongly agree                 0.4360317  0.5360753  0.8133777
+##                                                  p value
+## as.factor(year)25                           0.4494225266
+## exp10some                                   0.8560103960
+## Strongly disagree|Somewhat disagree         0.8344600121
+## Somewhat disagree|Neither agree or disagree 0.0003970346
+## Neither agree or disagree|Somewhat agree    0.0003970484
+## Somewhat agree|Strongly agree               0.4160015592</code></pre>
+<pre class="r"><code>(ci &lt;- confint(model))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.939534 0.8333441
+## exp10some         -1.281675 1.5382593</code></pre>
+<pre class="r"><code>confint.default(model)</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.898768 0.8413263
+## exp10some         -1.263040 1.5207676</code></pre>
+<pre class="r"><code>exp(coef(model))</code></pre>
+<pre><code>## as.factor(year)25         exp10some 
+##         0.5893585         1.1375350</code></pre>
+<pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
+<pre><code>##                          OR    2.5 %   97.5 %
+## as.factor(year)25 0.5893585 0.143771 2.301001
+## exp10some         1.1375350 0.277572 4.656477</code></pre>
 <pre class="r"><code>#14 My manual dexterity skills have improved as a result of using this epidural model.
 table(s2$Q14)</code></pre>
 <pre><code>## 
@@ -672,6 +1016,56 @@ table(s2$Q14)</code></pre>
 ##                         19                         20 
 ##          Somewhat disagree             Strongly agree 
 ##                          2                         14</code></pre>
+<pre class="r"><code>table(s2$Q14, s2$year)</code></pre>
+<pre><code>##                             
+##                              24 25
+##   Neither agree nor disagree  6 13
+##   Somewhat agree             10 10
+##   Somewhat disagree           1  1
+##   Strongly agree              7  7</code></pre>
+<pre class="r"><code>table(s2$Q14, s2$exp)</code></pre>
+<pre><code>##                             
+##                              None Observed Performed
+##   Neither agree nor disagree   10        4         5
+##   Somewhat agree               11        5         4
+##   Somewhat disagree             1        0         1
+##   Strongly agree               10        1         3</code></pre>
+<pre class="r"><code>#not year, not experience
+s2$Q14 &lt;- factor(s2$Q14, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q14~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable &lt;- coef(summary(model))
+p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
+(ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
+<pre><code>##                                                    Value Std. Error    t value
+## as.factor(year)25                             0.06943758  0.6679043  0.1039634
+## exp10some                                    -0.70371986  0.6965486 -1.0102954
+## Strongly disagree|Somewhat disagree         -11.70069507 49.7113377 -0.2353728
+## Somewhat disagree|Neither agree or disagree  -3.12555722  0.8683685 -3.5993441
+## Neither agree or disagree|Somewhat agree     -3.12535607  0.8683136 -3.5993404
+## Somewhat agree|Strongly agree                 0.22545353  0.5256264  0.4289235
+##                                                  p value
+## as.factor(year)25                           0.9171984097
+## exp10some                                   0.3123538064
+## Strongly disagree|Somewhat disagree         0.8139194219
+## Somewhat disagree|Neither agree or disagree 0.0003190208
+## Neither agree or disagree|Somewhat agree    0.0003190253
+## Somewhat agree|Strongly agree               0.6679788697</code></pre>
+<pre class="r"><code>(ci &lt;- confint(model))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.247459 1.3965765
+## exp10some         -2.129262 0.6372639</code></pre>
+<pre class="r"><code>confint.default(model)</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.239631 1.3785059
+## exp10some         -2.068930 0.6614904</code></pre>
+<pre class="r"><code>exp(coef(model))</code></pre>
+<pre><code>## as.factor(year)25         exp10some 
+##         1.0719052         0.4947415</code></pre>
+<pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
+<pre><code>##                          OR     2.5 %   97.5 %
+## as.factor(year)25 1.0719052 0.2872336 4.041341
+## exp10some         0.4947415 0.1189251 1.891299</code></pre>
 <pre class="r"><code>#Q15 I received feedback from an instructor after I used the epidural model.
 table(s2$Q15)</code></pre>
 <pre><code>## 
@@ -679,6 +1073,56 @@ table(s2$Q15)</code></pre>
 ##                          2                         23 
 ##          Somewhat disagree             Strongly agree 
 ##                          5                         25</code></pre>
+<pre class="r"><code>table(s2$Q15, s2$year)</code></pre>
+<pre><code>##                             
+##                              24 25
+##   Neither agree nor disagree  1  1
+##   Somewhat agree              9 14
+##   Somewhat disagree           2  3
+##   Strongly agree             12 13</code></pre>
+<pre class="r"><code>table(s2$Q15, s2$exp)</code></pre>
+<pre><code>##                             
+##                              None Observed Performed
+##   Neither agree nor disagree    1        0         1
+##   Somewhat agree               15        4         4
+##   Somewhat disagree             1        3         1
+##   Strongly agree               15        3         7</code></pre>
+<pre class="r"><code>#not year, not experience
+s2$Q15 &lt;- factor(s2$Q15, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q15~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable &lt;- coef(summary(model))
+p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
+(ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
+<pre><code>##                                                   Value Std. Error    t value
+## as.factor(year)25                            -0.2858746  0.5405429 -0.5288658
+## exp10some                                    -0.3702584  0.5468595 -0.6770632
+## Strongly disagree|Somewhat disagree         -11.9690279 44.6360733 -0.2681470
+## Somewhat disagree|Neither agree or disagree  -2.5922052  0.6156191 -4.2107287
+## Neither agree or disagree|Somewhat agree     -2.5921036  0.6156038 -4.2106687
+## Somewhat agree|Strongly agree                -0.1903138  0.4501311 -0.4227964
+##                                                  p value
+## as.factor(year)25                           5.968986e-01
+## exp10some                                   4.983659e-01
+## Strongly disagree|Somewhat disagree         7.885862e-01
+## Somewhat disagree|Neither agree or disagree 2.545483e-05
+## Neither agree or disagree|Somewhat agree    2.546159e-05
+## Somewhat agree|Strongly agree               6.724438e-01</code></pre>
+<pre class="r"><code>(ci &lt;- confint(model))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.360194 0.7718607
+## exp10some         -1.454580 0.7033731</code></pre>
+<pre class="r"><code>confint.default(model)</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.345319 0.7735699
+## exp10some         -1.442083 0.7015664</code></pre>
+<pre class="r"><code>exp(coef(model))</code></pre>
+<pre><code>## as.factor(year)25         exp10some 
+##         0.7513568         0.6905559</code></pre>
+<pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
+<pre><code>##                          OR     2.5 %   97.5 %
+## as.factor(year)25 0.7513568 0.2566110 2.163789
+## exp10some         0.6905559 0.2334983 2.020557</code></pre>
 <pre class="r"><code>#16 As a result of using the model, I now feel more confident to perform an epidural injection on a bovine.
 table(s2$Q16)</code></pre>
 <pre><code>## 
@@ -686,6 +1130,57 @@ table(s2$Q16)</code></pre>
 ##                          5                         19 
 ##          Somewhat disagree             Strongly agree 
 ##                          1                         30</code></pre>
+<pre class="r"><code>table(s2$Q16, s2$year)</code></pre>
+<pre><code>##                             
+##                              24 25
+##   Neither agree nor disagree  3  2
+##   Somewhat agree              6 13
+##   Somewhat disagree           0  1
+##   Strongly agree             15 15</code></pre>
+<pre class="r"><code>table(s2$Q16, s2$exp)</code></pre>
+<pre><code>##                             
+##                              None Observed Performed
+##   Neither agree nor disagree    1        1         3
+##   Somewhat agree               10        5         4
+##   Somewhat disagree             0        1         0
+##   Strongly agree               21        3         6</code></pre>
+<pre class="r"><code>#not year, not experience
+s2$Q16 &lt;- factor(s2$Q16, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q16~ as.factor(year) + exp10, data = s2, Hess=TRUE)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>ctable &lt;- coef(summary(model))
+p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
+(ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
+<pre><code>##                                                   Value Std. Error    t value
+## as.factor(year)25                            -0.9383505  0.6254490 -1.5002830
+## exp10some                                    -0.9695701  0.6143697 -1.5781542
+## Strongly disagree|Somewhat disagree         -12.6864168 46.0157087 -0.2756975
+## Somewhat disagree|Neither agree or disagree  -5.0156005  1.1854498 -4.2309681
+## Neither agree or disagree|Somewhat agree     -5.0155568  1.1854319 -4.2309952
+## Somewhat agree|Strongly agree                -1.3462983  0.5724969 -2.3516254
+##                                                  p value
+## as.factor(year)25                           1.335411e-01
+## exp10some                                   1.145302e-01
+## Strongly disagree|Somewhat disagree         7.827804e-01
+## Somewhat disagree|Neither agree or disagree 2.326877e-05
+## Neither agree or disagree|Somewhat agree    2.326596e-05
+## Somewhat agree|Strongly agree               1.869159e-02</code></pre>
+<pre class="r"><code>(ci &lt;- confint(model))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -2.227085 0.2540257
+## exp10some         -2.211654 0.2206886</code></pre>
+<pre class="r"><code>confint.default(model)</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -2.164208 0.2875070
+## exp10some         -2.173712 0.2345724</code></pre>
+<pre class="r"><code>exp(coef(model))</code></pre>
+<pre><code>## as.factor(year)25         exp10some 
+##         0.3912727         0.3792461</code></pre>
+<pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
+<pre><code>##                          OR     2.5 %   97.5 %
+## as.factor(year)25 0.3912727 0.1078423 1.289205
+## exp10some         0.3792461 0.1095194 1.246935</code></pre>
 <pre class="r"><code>#17 The skills I have learnt using the model will be valuable to me during my clinical year.
 table(s2$Q17)</code></pre>
 <pre><code>## 
@@ -693,6 +1188,57 @@ table(s2$Q17)</code></pre>
 ##                          4                         16 
 ##          Somewhat disagree             Strongly agree 
 ##                          1                         34</code></pre>
+<pre class="r"><code>table(s2$Q17, s2$year)</code></pre>
+<pre><code>##                             
+##                              24 25
+##   Neither agree nor disagree  1  3
+##   Somewhat agree              6 10
+##   Somewhat disagree           0  1
+##   Strongly agree             17 17</code></pre>
+<pre class="r"><code>table(s2$Q17, s2$exp)</code></pre>
+<pre><code>##                             
+##                              None Observed Performed
+##   Neither agree nor disagree    2        1         1
+##   Somewhat agree               10        3         3
+##   Somewhat disagree             0        0         1
+##   Strongly agree               20        6         8</code></pre>
+<pre class="r"><code>#not year, not experience
+s2$Q17 &lt;- factor(s2$Q17, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
+model &lt;- polr(Q17~ as.factor(year) + exp10, data = s2, Hess=TRUE)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>ctable &lt;- coef(summary(model))
+p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
+(ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
+<pre><code>##                                                    Value  Std. Error
+## as.factor(year)25                            -0.64196059 0.610466217
+## exp10some                                    -0.06214792 0.608231374
+## Strongly disagree|Somewhat disagree         -17.35399134 0.006623806
+## Somewhat disagree|Neither agree or disagree  -4.33237803 1.115303315
+## Neither agree or disagree|Somewhat agree     -4.33199368 1.115133856
+## Somewhat agree|Strongly agree                -1.08437466 0.531291788
+##                                                   t value      p value
+## as.factor(year)25                              -1.0515907 0.2929873846
+## exp10some                                      -0.1021781 0.9186153246
+## Strongly disagree|Somewhat disagree         -2619.9426152 0.0000000000
+## Somewhat disagree|Neither agree or disagree    -3.8844841 0.0001025474
+## Neither agree or disagree|Somewhat agree       -3.8847298 0.0001024438
+## Somewhat agree|Strongly agree                  -2.0410153 0.0412493074</code></pre>
+<pre class="r"><code>(ci &lt;- confint(model))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.887551 0.5338056
+## exp10some         -1.250801 1.1594685</code></pre>
+<pre class="r"><code>confint.default(model)</code></pre>
+<pre><code>##                       2.5 %    97.5 %
+## as.factor(year)25 -1.838452 0.5545312
+## exp10some         -1.254260 1.1299637</code></pre>
+<pre class="r"><code>exp(coef(model))</code></pre>
+<pre><code>## as.factor(year)25         exp10some 
+##         0.5262596         0.9397439</code></pre>
+<pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
+<pre><code>##                          OR     2.5 %   97.5 %
+## as.factor(year)25 0.5262596 0.1514422 1.705410
+## exp10some         0.9397439 0.2862753 3.188238</code></pre>
 </div>
 
 

@@ -57,6 +57,13 @@ s1 <- s1 |>
     )
   )
 
+s1<- s1 |> 
+  mutate(
+    exp10 = case_when(
+      exp == "None"  ~ "none",
+      exp == "Observed" ~ "some",
+      exp == "Performed" ~ "some"))
+
 s2 <- read_csv('data/Bovine Epidural survey 2_July 9, 2025_15.09.csv')
 s2 <- s2 |> 
   mutate(
@@ -187,31 +194,69 @@ table(prelong$prepost, prelong$year)
 
 table(prewide$year)
 
+table (prelong$Prenopost, prelong$year)
+table (prelong$Postnopre, prelong$year)
+
 
 ```
 
 Students who completed the pre-survey (n=37 in 2024; n=33 in 2025)
 
-Students who completed the post-survey (n=24 in 2024; n=31 in 2025; who completed post but not pre? pre but not post?)
+Students who completed the post-survey (n=24 in 2024; n=31 in 2025)
 
-Students who completed both: 24 in 2024 and 28 in 2025.
+Students who complete pre but not post survey (n=13 in 2024; n=5 in 2025)
 
-## Student Experience with Epidurals
+Students who completed the post survey but not the pre (n=0 in 2024; n=3 in 2025)
+
+Students who completed both: 24 in 2024 and 28 in 2025 (n=52 complete surveys). This is the data I used for the delta chance and change in attitude models (only students with complete data).
+
+## Student Experience with Epidurals (s1)
+
+First, for all students who completed the pre-survey
 
 ```{r}
 
+
+#How much experience have you had with bovine epidural prior to this course? Select all that applies:
 table(s1$Q8)
 table(s1$exp)
+table(s1$exp10)
+
+#When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
 table(s1$Q10)
 unique(s1$Q10)
 
-
+#Q11 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
 table(s1$Q11)
+
+#Q12: When learning a new practical task or skill, the chance to perform that task or skill on a model enhances the learning process.
 table(s1$Q12)
+
+
 
 ```
 
-## Delta Change in Attitude and change model
+## Student Experience with Epidurals (s2)
+
+First, for all students who completed the post survey
+
+```{r}
+
+#How much experience have you had with bovine epidural prior to this course? Select all that applies:
+table(s2$Q8)
+table(s2$exp)
+table(s2$exp10)
+
+#When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
+table(s2$Q10)
+
+
+#Q11 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
+table(s2$Q11)
+
+```
+
+## Delta Change in Attitude and Change Model
 
 ```{r}
 #When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
@@ -234,7 +279,7 @@ table(both$Q10, both$exp10)
 
 #yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural under supervision.
 both$Q10 <- factor(both$Q10, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
-model <- polr(Q10~ prepost, data = both, Hess=TRUE)
+model <- polr(Q10~ prepost +  exp10, data = both, Hess=TRUE)
 ctable <- coef(summary(model))
 p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
 (ctable <- cbind(ctable, "p value" = p))
@@ -251,7 +296,7 @@ table(both$Q11, both$prepost)
 
 #yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural unsupervised.
 both$Q11 <- factor(both$Q11, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
-model <- polr(Q11~ prepost, data = both, Hess=TRUE)
+model <- polr(Q11~ prepost + exp10, data = both, Hess=TRUE)
 ctable <- coef(summary(model))
 p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
 (ctable <- cbind(ctable, "p value" = p))
@@ -292,8 +337,9 @@ table(s2$Q11a)
 table(s2$Q11a, s2$year)
 table(s2$Q11a, s2$exp)
 
+#year no difference, experience no difference
 s2$Q11a <- factor(s2$Q11a, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
-model <- polr(Q11a~ as.factor(year), data = s2, Hess=TRUE)
+model <- polr(Q11a~ as.factor(year) + exp10, data = s2, Hess=TRUE)
 ctable <- coef(summary(model))
 p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
 (ctable <- cbind(ctable, "p value" = p))
@@ -301,13 +347,16 @@ p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
 confint.default(model)
 exp(coef(model))
 exp(cbind(OR = coef(model), ci))
+
 
 #12 The use of the model has duplicated my previous learning.
 table(s2$Q12)
+table(s2$Q12, s2$exp10)
 table(s2$Q12, s2$year)
 
+#not year, not experience sig
 s2$Q12 <- factor(s2$Q12, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
-model <- polr(Q12~ as.factor(year), data = s2, Hess=TRUE)
+model <- polr(Q12~ as.factor(year) + exp10, data = s2, Hess=TRUE)
 ctable <- coef(summary(model))
 p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
 (ctable <- cbind(ctable, "p value" = p))
@@ -316,20 +365,90 @@ confint.default(model)
 exp(coef(model))
 exp(cbind(OR = coef(model), ci))
 
+
 #13 My range of manual dexterity skills have increased as a result of using this epidural model.
 table(s2$Q13)
+table(s2$Q13, s2$year)
+table(s2$Q13, s2$exp)
+
+#not year, not experience
+s2$Q13 <- factor(s2$Q13, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q13~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
 
 #14 My manual dexterity skills have improved as a result of using this epidural model.
 table(s2$Q14)
+table(s2$Q14, s2$year)
+table(s2$Q14, s2$exp)
+
+#not year, not experience
+s2$Q14 <- factor(s2$Q14, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q14~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
 
 #Q15 I received feedback from an instructor after I used the epidural model.
 table(s2$Q15)
+table(s2$Q15, s2$year)
+table(s2$Q15, s2$exp)
+
+#not year, not experience
+s2$Q15 <- factor(s2$Q15, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q15~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
 
 #16 As a result of using the model, I now feel more confident to perform an epidural injection on a bovine.
 table(s2$Q16)
+table(s2$Q16, s2$year)
+table(s2$Q16, s2$exp)
+
+#not year, not experience
+s2$Q16 <- factor(s2$Q16, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q16~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
 
 #17 The skills I have learnt using the model will be valuable to me during my clinical year.
 table(s2$Q17)
+table(s2$Q17, s2$year)
+table(s2$Q17, s2$exp)
+
+#not year, not experience
+s2$Q17 <- factor(s2$Q17, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q17~ as.factor(year) + exp10, data = s2, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
 
 
 
