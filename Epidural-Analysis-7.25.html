@@ -381,6 +381,13 @@ s1 &lt;- read_csv(&#39;data/Bovine Epidural survey 1_July 9, 2025_15.04.csv&#39;
     )
   )
 
+s1&lt;- s1 |&gt; 
+  mutate(
+    exp10 = case_when(
+      exp == &quot;None&quot;  ~ &quot;none&quot;,
+      exp == &quot;Observed&quot; ~ &quot;some&quot;,
+      exp == &quot;Performed&quot; ~ &quot;some&quot;))
+
 s2 &lt;- read_csv(&#39;data/Bovine Epidural survey 2_July 9, 2025_15.09.csv&#39;)</code></pre>
 <pre><code>## Rows: 55 Columns: 16
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -566,11 +573,14 @@ both&lt;- both |&gt;
 <p>Students who completed the post survey but not the pre (n=0 in 2024;
 n=3 in 2025)</p>
 <p>Students who completed both: 24 in 2024 and 28 in 2025 (n=52 complete
-surveys).</p>
+surveys). This is the data I used for the delta chance and change in
+attitude models (only students with complete data).</p>
 </div>
-<div id="student-experience-with-epidurals" class="section level2">
-<h2>Student Experience with Epidurals</h2>
-<pre class="r"><code>table(s1$Q8)</code></pre>
+<div id="student-experience-with-epidurals-s1" class="section level2">
+<h2>Student Experience with Epidurals (s1)</h2>
+<p>First, for all students who completed the pre-survey</p>
+<pre class="r"><code>#How much experience have you had with bovine epidural prior to this course? Select all that applies:
+table(s1$Q8)</code></pre>
 <pre><code>## 
 ##                                                                    Not at all 
 ##                                                                            37 
@@ -590,7 +600,12 @@ surveys).</p>
 <pre><code>## 
 ##      None  Observed Performed 
 ##        38        17        15</code></pre>
-<pre class="r"><code>table(s1$Q10)</code></pre>
+<pre class="r"><code>table(s1$exp10)</code></pre>
+<pre><code>## 
+## none some 
+##   38   32</code></pre>
+<pre class="r"><code>#When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
+table(s1$Q10)</code></pre>
 <pre><code>## 
 ## Neither agree nor disagree             Somewhat agree 
 ##                          6                         19 
@@ -602,7 +617,8 @@ surveys).</p>
 <pre><code>## [1] &quot;Somewhat agree&quot;             &quot;Somewhat disagree&quot;         
 ## [3] &quot;Strongly disagree&quot;          &quot;Strongly agree&quot;            
 ## [5] &quot;Neither agree nor disagree&quot;</code></pre>
-<pre class="r"><code>table(s1$Q11)</code></pre>
+<pre class="r"><code>#Q11 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
+table(s1$Q11)</code></pre>
 <pre><code>## 
 ## Neither agree nor disagree             Somewhat agree 
 ##                          3                         10 
@@ -610,10 +626,50 @@ surveys).</p>
 ##                         11                          5 
 ##          Strongly disagree 
 ##                         41</code></pre>
-<pre class="r"><code>table(s1$Q12)</code></pre>
+<pre class="r"><code>#Q12: When learning a new practical task or skill, the chance to perform that task or skill on a model enhances the learning process.
+table(s1$Q12)</code></pre>
 <pre><code>## 
 ## Somewhat agree Strongly agree 
 ##             15             55</code></pre>
+</div>
+<div id="student-experience-with-epidurals-s2" class="section level2">
+<h2>Student Experience with Epidurals (s2)</h2>
+<p>First, for all students who completed the post survey</p>
+<pre class="r"><code>#How much experience have you had with bovine epidural prior to this course? Select all that applies:
+table(s2$Q8)</code></pre>
+<pre><code>## 
+##                                                                    Not at all 
+##                                                                            32 
+##                                                    Observed a couple of times 
+##                                                                             9 
+## Observed a couple of times,Performed under the supervision of a veterinarinan 
+##                                                                             2 
+##                                                           Observed many times 
+##                                                                             1 
+##        Observed many times,Performed under the supervision of a veterinarinan 
+##                                                                             5 
+##                            Performed under the supervision of a veterinarinan 
+##                                                                             6</code></pre>
+<pre class="r"><code>table(s2$exp)</code></pre>
+<pre><code>## 
+##      None  Observed Performed 
+##        32        10        13</code></pre>
+<pre class="r"><code>table(s2$exp10)</code></pre>
+<pre><code>## 
+## none some 
+##   32   23</code></pre>
+<pre class="r"><code>#When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
+table(s2$Q10)</code></pre>
+<pre><code>## 
+## Somewhat agree Strongly agree 
+##              7             48</code></pre>
+<pre class="r"><code>#Q11 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
+table(s2$Q11)</code></pre>
+<pre><code>## 
+## Neither agree nor disagree             Somewhat agree 
+##                          4                         34 
+##          Somewhat disagree             Strongly agree 
+##                          3                         14</code></pre>
 </div>
 <div id="delta-change-in-attitude-and-change-model" class="section level2">
 <h2>Delta Change in Attitude and Change Model</h2>
@@ -679,36 +735,40 @@ table(both$Q10)</code></pre>
 ##   Strongly disagree             2    0</code></pre>
 <pre class="r"><code>#yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural under supervision.
 both$Q10 &lt;- factor(both$Q10, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
-model &lt;- polr(Q10~ prepost, data = both, Hess=TRUE)
+model &lt;- polr(Q10~ prepost +  exp10, data = both, Hess=TRUE)
 ctable &lt;- coef(summary(model))
 p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
 (ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
 <pre><code>##                                                 Value Std. Error   t value
-## prepostpre                                  -2.900836  0.5597024 -5.182818
-## Strongly disagree|Somewhat disagree         -6.054866  0.8708755 -6.952620
-## Somewhat disagree|Neither agree or disagree -3.528960  0.5414023 -6.518184
-## Neither agree or disagree|Somewhat agree    -3.528903  0.5413990 -6.518120
-## Somewhat agree|Strongly agree               -2.272677  0.4692918 -4.842780
+## prepostpre                                  -4.259307  0.7394722 -5.759928
+## exp10some                                    2.964163  0.6687333  4.432505
+## Strongly disagree|Somewhat disagree         -6.632833  0.9789846 -6.775217
+## Somewhat disagree|Neither agree or disagree -3.541547  0.6350669 -5.576651
+## Neither agree or disagree|Somewhat agree    -3.541094  0.6350285 -5.576276
+## Somewhat agree|Strongly agree               -1.695100  0.4854674 -3.491687
 ##                                                  p value
-## prepostpre                                  2.185587e-07
-## Strongly disagree|Somewhat disagree         3.585643e-12
-## Somewhat disagree|Neither agree or disagree 7.116349e-11
-## Neither agree or disagree|Somewhat agree    7.119419e-11
-## Somewhat agree|Strongly agree               1.280353e-06</code></pre>
+## prepostpre                                  8.414991e-09
+## exp10some                                   9.314456e-06
+## Strongly disagree|Somewhat disagree         1.242197e-11
+## Somewhat disagree|Neither agree or disagree 2.451934e-08
+## Neither agree or disagree|Somewhat agree    2.457222e-08
+## Somewhat agree|Strongly agree               4.799801e-04</code></pre>
 <pre class="r"><code>(ci &lt;- confint(model))</code></pre>
 <pre><code>## Waiting for profiling to be done...</code></pre>
-<pre><code>##     2.5 %    97.5 % 
-## -4.102544 -1.875532</code></pre>
+<pre><code>##                2.5 %   97.5 %
+## prepostpre -5.841221 -2.91984
+## exp10some   1.736803  4.38322</code></pre>
 <pre class="r"><code>confint.default(model)</code></pre>
 <pre><code>##                2.5 %    97.5 %
-## prepostpre -3.997832 -1.803839</code></pre>
+## prepostpre -5.708645 -2.809968
+## exp10some   1.653470  4.274857</code></pre>
 <pre class="r"><code>exp(coef(model))</code></pre>
-<pre><code>## prepostpre 
-## 0.05497726</code></pre>
+<pre><code>## prepostpre  exp10some 
+##  0.0141321 19.3784855</code></pre>
 <pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
-<pre><code>##                OR         ci
-## 2.5 %  0.05497726 0.01653058
-## 97.5 % 0.05497726 0.15327333</code></pre>
+<pre><code>##                    OR       2.5 %      97.5 %
+## prepostpre  0.0141321 0.002905294  0.05394233
+## exp10some  19.3784855 5.679157843 80.09553466</code></pre>
 <pre class="r"><code>#Q11 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
 table(both$Q11)</code></pre>
 <pre><code>## 
@@ -736,36 +796,40 @@ table(both$Q11)</code></pre>
 ##   Strongly disagree             0  27</code></pre>
 <pre class="r"><code>#yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural unsupervised.
 both$Q11 &lt;- factor(both$Q11, levels = c(&quot;Strongly disagree&quot;, &quot;Somewhat disagree&quot;, &quot;Neither agree or disagree&quot;, &quot;Somewhat agree&quot;, &quot;Strongly agree&quot;), ordered = TRUE)
-model &lt;- polr(Q11~ prepost, data = both, Hess=TRUE)
+model &lt;- polr(Q11~ prepost + exp10, data = both, Hess=TRUE)
 ctable &lt;- coef(summary(model))
 p &lt;- pnorm(abs(ctable[, &quot;t value&quot;]), lower.tail = FALSE) * 2
 (ctable &lt;- cbind(ctable, &quot;p value&quot; = p))</code></pre>
-<pre><code>##                                                  Value Std. Error   t value
-## prepostpre                                  -3.2273257  0.5395642 -5.981356
-## Strongly disagree|Somewhat disagree         -3.1055284  0.4983192 -6.232006
-## Somewhat disagree|Neither agree or disagree -2.2272437  0.4376009 -5.089669
-## Neither agree or disagree|Somewhat agree    -2.2271872  0.4375963 -5.089593
-## Somewhat agree|Strongly agree                0.6871658  0.2925103  2.349202
+<pre><code>##                                                 Value Std. Error   t value
+## prepostpre                                  -3.919429  0.5936421 -6.602344
+## exp10some                                    2.542702  0.4776934  5.322876
+## Strongly disagree|Somewhat disagree         -2.735994  0.5391594 -5.074555
+## Somewhat disagree|Neither agree or disagree -1.562825  0.4560524 -3.426855
+## Neither agree or disagree|Somewhat agree    -1.562797  0.4560501 -3.426810
+## Somewhat agree|Strongly agree                2.043409  0.4478338  4.562875
 ##                                                  p value
-## prepostpre                                  2.212872e-09
-## Strongly disagree|Somewhat disagree         4.605007e-10
-## Somewhat disagree|Neither agree or disagree 3.586888e-07
-## Neither agree or disagree|Somewhat agree    3.588335e-07
-## Somewhat agree|Strongly agree               1.881370e-02</code></pre>
+## prepostpre                                  4.047058e-11
+## exp10some                                   1.021396e-07
+## Strongly disagree|Somewhat disagree         3.884029e-07
+## Somewhat disagree|Neither agree or disagree 6.106158e-04
+## Neither agree or disagree|Somewhat agree    6.107159e-04
+## Somewhat agree|Strongly agree               5.045786e-06</code></pre>
 <pre class="r"><code>(ci &lt;- confint(model))</code></pre>
 <pre><code>## Waiting for profiling to be done...</code></pre>
-<pre><code>##     2.5 %    97.5 % 
-## -4.369415 -2.232663</code></pre>
+<pre><code>##                2.5 %    97.5 %
+## prepostpre -5.169354 -2.825654
+## exp10some   1.641504  3.523422</code></pre>
 <pre class="r"><code>confint.default(model)</code></pre>
 <pre><code>##                2.5 %    97.5 %
-## prepostpre -4.284852 -2.169799</code></pre>
+## prepostpre -5.082946 -2.755912
+## exp10some   1.606441  3.478964</code></pre>
 <pre class="r"><code>exp(coef(model))</code></pre>
-<pre><code>## prepostpre 
-## 0.03966343</code></pre>
+<pre><code>##  prepostpre   exp10some 
+##  0.01985242 12.71398294</code></pre>
 <pre class="r"><code>exp(cbind(OR = coef(model), ci))</code></pre>
-<pre><code>##                OR         ci
-## 2.5 %  0.03966343 0.01265865
-## 97.5 % 0.03966343 0.10724249</code></pre>
+<pre><code>##                     OR      2.5 %      97.5 %
+## prepostpre  0.01985242 0.00568824  0.05926988
+## exp10some  12.71398294 5.16292649 33.90023121</code></pre>
 </div>
 <div id="post-survey" class="section level2">
 <h2>Post Survey</h2>
