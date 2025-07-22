@@ -212,7 +212,7 @@ Students who completed both: 24 in 2024 and 28 in 2025 (n=52 complete surveys). 
 
 ## Student Experience with Epidurals (s1)
 
-First, for all students who completed the pre-survey
+### First, for all students who completed the pre-survey
 
 ```{r}
 
@@ -236,9 +236,89 @@ table(s1$Q12)
 
 ```
 
+### Stacked Bar Charts for S1 only (Q10,11,12)
+
+```{r}
+
+df <- data.frame(
+  Group = c("Q10", "Q11", "Q12"),
+  Strongly_Disagree = c(9, 59, 0),
+  Disagree = c(27, 16, 0),
+  Neutral = c(9, 4, 0),
+  Agree = c(27, 14, 21),
+  Strongly_Agree = c(29, 7, 79)
+)
+
+df_long <- df |> 
+  pivot_longer(cols = -Group, names_to = "Rating", values_to = "Percentage")
+
+df_long$Group <- factor(df_long$Group, levels = rev(df$Group))  
+df_long$Rating <- factor(df_long$Rating, 
+                         levels = rev(c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree")))
+
+ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
+  geom_bar(stat = "identity", position = "stack", color = "black") +
+      geom_text(aes(label = Percentage),
+            position = position_stack(vjust = 0.5), 
+            color = "black", size = 4) + 
+  scale_fill_brewer(palette = "Blues", direction = -1,
+                    labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"), 
+                     guide = guide_legend(nrow = 1)) +  
+  labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
+  theme_classic()+
+  theme (legend.position = "none", 
+         legend.direction = "horizontal", 
+              axis.text = element_text(color = "black", size=10), 
+               legend.text = element_text(color = "black", size=10))
+
+
+
+
+
+
+
+
+
+```
+
+### Models exploring year and experience with the epidural procedure
+
+```{r}
+
+#When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
+table(s1$Q10)
+
+s1$Q10 <- factor(s1$Q10, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q10~ year + exp10, data = s1, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
+
+#Q11 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
+table(s1$Q11)
+
+s1$Q11 <- factor(s1$Q11, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+model <- polr(Q11~ year + exp10, data = s1, Hess=TRUE)
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+(ci <- confint(model))
+confint.default(model)
+exp(coef(model))
+exp(cbind(OR = coef(model), ci))
+
+
+
+```
+
 ## Student Experience with Epidurals (s2)
 
-First, for all students who completed the post survey
+### First, for all students who completed the post survey
 
 ```{r}
 
@@ -256,7 +336,48 @@ table(s2$Q11)
 
 ```
 
+### Stacked Bar Charts
+
+```{r}
+df <- data.frame(
+  Group = c("Q10", "Q11"),
+  Strongly_Disagree = c(0, 0),
+  Disagree = c(0, 5),
+  Neutral = c(0, 7),
+  Agree = c(13, 62),
+  Strongly_Agree = c(87, 25)
+)
+
+df_long <- df |> 
+  pivot_longer(cols = -Group, names_to = "Rating", values_to = "Percentage")
+
+df_long$Group <- factor(df_long$Group, levels = rev(df$Group))  
+df_long$Rating <- factor(df_long$Rating, 
+                         levels = rev(c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree")))
+
+ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
+  geom_bar(stat = "identity", position = "stack", color = "black") +
+      geom_text(aes(label = Percentage),
+            position = position_stack(vjust = 0.5), 
+            color = "black", size = 4) + 
+  scale_fill_brewer(palette = "Blues", direction = -1,
+                    labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"), 
+                     guide = guide_legend(nrow = 1)) +  
+  labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
+  theme_classic()+
+  theme (legend.position = "none", 
+         legend.direction = "horizontal", 
+              axis.text = element_text(color = "black", size=10), 
+               legend.text = element_text(color = "black", size=10))
+
+
+
+
+```
+
 ## Delta Change in Attitude and Change Model
+
+### Summarized Data
 
 ```{r}
 #When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
@@ -270,6 +391,59 @@ table (prewide$Q11prenum)
 table(prewide$Q11postnum)
 table(prewide$Q11delta)
 
+
+
+
+
+```
+
+### Stacked Bar Charts
+
+```{r}
+
+df <- data.frame(
+  Group = c("Q10 pre", "Q10 post", "Q11 pre", "Q11 post"),
+  Strongly_Disagree = c(4, 0, 52, 0),
+  Disagree = c(29, 0, 17, 4),
+  Neutral = c(12, 0, 6, 8),
+  Agree = c(23, 10, 17, 62),
+  Strongly_Agree = c(33, 90, 8, 27)
+)
+
+df_long <- df |> 
+  pivot_longer(cols = -Group, names_to = "Rating", values_to = "Percentage")
+
+df_long$Group <- factor(df_long$Group, levels = rev(df$Group))  
+df_long$Rating <- factor(df_long$Rating, 
+                         levels = rev(c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree")))
+
+ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
+  geom_bar(stat = "identity", position = "stack", color = "black") +
+      geom_text(aes(label = Percentage),
+            position = position_stack(vjust = 0.5), 
+            color = "black", size = 4) + 
+  scale_fill_brewer(palette = "Blues", direction = -1,
+                    labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"), 
+                     guide = guide_legend(nrow = 1)) +  
+  labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
+  theme_classic()+
+  theme (legend.position = "none", 
+         legend.direction = "horizontal", 
+              axis.text = element_text(color = "black", size=10), 
+               legend.text = element_text(color = "black", size=10))
+
+
+
+
+
+
+
+```
+
+### Models
+
+```{r}
+
 #using the long format, with only students who completed both the pre and post survey (n=52 students)
 #Q10 When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task under supervision.
 table(both$Q10)
@@ -279,7 +453,7 @@ table(both$Q10, both$exp10)
 
 #yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural under supervision.
 both$Q10 <- factor(both$Q10, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
-model <- polr(Q10~ prepost +  exp10, data = both, Hess=TRUE)
+model <- polr(Q10~ prepost, data = both, Hess=TRUE)
 ctable <- coef(summary(model))
 p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
 (ctable <- cbind(ctable, "p value" = p))
@@ -296,7 +470,7 @@ table(both$Q11, both$prepost)
 
 #yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural unsupervised.
 both$Q11 <- factor(both$Q11, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
-model <- polr(Q11~ prepost + exp10, data = both, Hess=TRUE)
+model <- polr(Q11~ prepost, data = both, Hess=TRUE)
 ctable <- coef(summary(model))
 p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
 (ctable <- cbind(ctable, "p value" = p))
@@ -304,12 +478,13 @@ p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
 confint.default(model)
 exp(coef(model))
 exp(cbind(OR = coef(model), ci))
-
-
-
 ```
 
+### 
+
 ## Post Survey
+
+### Data and Models
 
 ```{r}
 
@@ -449,6 +624,47 @@ p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
 confint.default(model)
 exp(coef(model))
 exp(cbind(OR = coef(model), ci))
+
+
+
+
+
+
+```
+
+### Stacked Bar Chart
+
+```{r}
+df <- data.frame(
+  Group = c("Q10a", "Q11a", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17"),
+  Strongly_Disagree = c(0, 0, 4, 0, 0, 0, 0, 0),
+  Disagree = c(5, 2, 13, 4, 4, 9, 2, 2),
+  Neutral = c(6, 9, 33, 36, 35, 4, 9, 7),
+  Agree = c(36, 42, 30, 38, 36, 42, 34, 29),
+  Strongly_Agree = c(53, 47, 20, 22, 25, 45, 55, 62)
+)
+
+df_long <- df |> 
+  pivot_longer(cols = -Group, names_to = "Rating", values_to = "Percentage")
+
+df_long$Group <- factor(df_long$Group, levels = rev(df$Group))  
+df_long$Rating <- factor(df_long$Rating, 
+                         levels = rev(c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree")))
+
+ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
+  geom_bar(stat = "identity", position = "stack", color = "black") +
+      geom_text(aes(label = Percentage),
+            position = position_stack(vjust = 0.5), 
+            color = "black", size = 4) + 
+  scale_fill_brewer(palette = "Blues", direction = -1,
+                    labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"), 
+                     guide = guide_legend(nrow = 1)) +  
+  labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
+  theme_classic()+
+  theme (legend.position = "none", 
+         legend.direction = "horizontal", 
+              axis.text = element_text(color = "black", size=10), 
+               legend.text = element_text(color = "black", size=10))
 
 
 
