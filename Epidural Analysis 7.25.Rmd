@@ -181,6 +181,9 @@ both<- both |>
       exp == "Performed" ~ "some"))
   
 
+osce <- read_csv('data/OSCE results.csv')
+
+
 ```
 
 ## Some Description of the Data/Participants
@@ -727,3 +730,105 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
 
 
 ```
+
+## OSCE Summary
+
+### Overall
+
+```{r}
+#Student chooses correct needle size and gauge
+table(osce$Q1)
+
+#Student manipulates the tail to find the correct location
+table(osce$Q2)
+
+#Student maintains a clean hand
+table(osce$Q3)
+
+#Student inserts needle in the appropriate joint
+table(osce$Q4)
+
+#Student inserts the needle at the proper angle
+table(osce$Q5)
+
+#Student inserts the needle with the bevel facing cranially
+table(osce$Q6)
+
+#Student demonstrates the bubble or hanging frop technique to check for the appropriate location
+table(osce$Q7)
+
+#Student uses two hands to attach the syringe
+table(osce$Q8)
+
+#total summarized score
+table(osce$Score)
+
+osce |> 
+  summarise(
+    mscore = mean(Score),
+    sdscore = sd(Score), 
+    ranges = range(Score)
+  )
+
+
+
+
+
+```
+
+### Difference by year? 
+
+```{r}
+#Student chooses correct needle size and gauge
+Q1tab <- table(osce$Q1, osce$Year)
+Q1tab
+fisher.test(Q1tab)
+
+#Student manipulates the tail to find the correct location
+Q2tab<- table(osce$Q2, osce$Year)
+Q2tab
+fisher.test(Q2tab)
+
+#Student maintains a clean hand
+Q3tab <- table(osce$Q3, osce$Year)
+Q3tab
+fisher.test(Q3tab)
+
+#Student inserts needle in the appropriate joint
+Q4tab<-table(osce$Q4, osce$Year)
+Q4tab
+fisher.test(Q4tab)
+
+#Student inserts the needle at the proper angle
+Q5tab<- table(osce$Q5, osce$Year)
+Q5tab
+fisher.test(Q5tab)
+
+#Student inserts the needle with the bevel facing cranially
+Q6tab <- table(osce$Q6, osce$Year)
+Q6tab
+fisher.test(Q6tab)
+
+#Student demonstrates the bubble or hanging drop technique to check for the appropriate location
+Q7tab <- table(osce$Q7, osce$Year)
+Q7tab
+fisher.test(Q7tab)
+
+#Student uses two hands to attach the syringe
+Q8tab<-table(osce$Q8, osce$Year)
+Q8tab
+fisher.test(Q8tab)
+
+#total summarized score
+table(osce$Score)
+osce |> 
+  group_by(Year) |> 
+  summarize(
+    mean = mean(Score), 
+    sd = sd(Score)
+  )
+t.test(Score ~ Year, data=osce)
+
+```
+
+Students in the 2025 cohort more likely to have a "0" in uses a hanging drop and using two hands to attach the syringe, and had overall lower scores.
