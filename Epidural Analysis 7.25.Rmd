@@ -2,7 +2,10 @@
 title: "Epidural Analysis"
 author: "Whitney Knauer"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
 ---
 
 ```{r}
@@ -38,6 +41,7 @@ library(gt)
 library(fuzzyjoin)
 library(lubridate)
 library(data.table)
+library(extrafont)
 ```
 
 ```{r}
@@ -249,7 +253,7 @@ df <- data.frame(
   Disagree = c(27, 16, 0),
   Neutral = c(9, 4, 0),
   Agree = c(27, 14, 21),
-  Strongly_Agree = c(29, 7, 79)
+  Strongly_Agree = c(28, 7, 79)
 )
 
 df_long <- df |> 
@@ -261,20 +265,21 @@ df_long$Rating <- factor(df_long$Rating,
 
 ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
   geom_bar(stat = "identity", position = "stack", color = "black") +
-      geom_text(aes(label = Percentage),
+      geom_text(
+            aes(label = ifelse(Percentage > 0, Percentage, "")),
             position = position_stack(vjust = 0.5), 
-            color = "black", size = 4) + 
+            color = "black", size = 4, 
+            family = "Times New Roman") + 
   scale_fill_brewer(palette = "Blues", direction = -1,
-                    labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"), 
-                     guide = guide_legend(nrow = 1)) +  
+                    labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"), 
+                     guide = guide_legend(nrow = 1, reverse = TRUE)) +  
   labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
   theme_classic()+
-  theme (legend.position = "none", 
+  theme (legend.position = "top", 
          legend.direction = "horizontal", 
               axis.text = element_text(color = "black", size=10), 
-               legend.text = element_text(color = "black", size=10))
-
-
+               legend.text = element_text(color = "black", size=10))+
+                theme(text=element_text(size=12, family = "Times New Roman"))
 
 
 
@@ -362,9 +367,11 @@ df_long$Rating <- factor(df_long$Rating,
 
 ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
   geom_bar(stat = "identity", position = "stack", color = "black") +
-      geom_text(aes(label = Percentage),
+      geom_text(
+             aes(label = ifelse(Percentage > 0, Percentage, "")),
             position = position_stack(vjust = 0.5), 
-            color = "black", size = 4) + 
+            color = "black", size = 4, 
+            family = "Times New Roman") + 
   scale_fill_brewer(palette = "Blues", direction = -1,
                     labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"), 
                      guide = guide_legend(nrow = 1)) +  
@@ -373,7 +380,9 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
   theme (legend.position = "none", 
          legend.direction = "horizontal", 
               axis.text = element_text(color = "black", size=10), 
-               legend.text = element_text(color = "black", size=10))
+               legend.text = element_text(color = "black", size=10))+
+                theme(text=element_text(size=12, family = "Times New Roman"))
+ 
 
 
 
@@ -390,13 +399,23 @@ table (prewide$Q10prenum)
 table(prewide$Q10postnum)
 table(prewide$Q10delta)
 
+prewide |> 
+  summarize(
+    meandelta = mean(Q10delta), 
+    sd = sd(Q10delta)
+  )
+
 
 #When next presented with the opportunity to perform a bovine epidural injection on a living animal, I feel confident to complete this task unsupervised.
 table (prewide$Q11prenum)
 table(prewide$Q11postnum)
 table(prewide$Q11delta)
 
-
+prewide |> 
+  summarize(
+    meandelta = mean(Q11delta), 
+    sd = sd(Q11delta)
+  )
 
 
 
@@ -424,9 +443,11 @@ df_long$Rating <- factor(df_long$Rating,
 
 ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
   geom_bar(stat = "identity", position = "stack", color = "black") +
-      geom_text(aes(label = Percentage),
+      geom_text(
+            aes(label = ifelse(Percentage > 0, Percentage, "")),
             position = position_stack(vjust = 0.5), 
-            color = "black", size = 4) + 
+            color = "black", size = 4, 
+            family = "Times New Roman") + 
   scale_fill_brewer(palette = "Blues", direction = -1,
                     labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"), 
                      guide = guide_legend(nrow = 1)) +  
@@ -435,7 +456,8 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
   theme (legend.position = "none", 
          legend.direction = "horizontal", 
               axis.text = element_text(color = "black", size=10), 
-               legend.text = element_text(color = "black", size=10))
+               legend.text = element_text(color = "black", size=10))+
+                theme(text=element_text(size=12, family = "Times New Roman"))
 
 
 
@@ -538,9 +560,10 @@ df_long$Group <- factor(df_long$Group, levels = rev(unique(df$Group)))
 # Plot
 ggplot(df_long, aes(x = PercentSigned, y = Group, fill = Rating)) +
   geom_bar(stat = "identity", position = "stack", color = "black")+
-  geom_text(aes(label = Percentage),
+  geom_text(aes(label = ifelse(Percentage > 0, Percentage, "")),
             position = position_stack(vjust = 0.5),
-            size = 3, color = "black")  +
+            size = 3, color = "black", 
+            family = "Times New Roman")  +
   scale_fill_manual(
     values = c(
       "Strongly_Disagree" = "#d73027",
@@ -549,7 +572,7 @@ ggplot(df_long, aes(x = PercentSigned, y = Group, fill = Rating)) +
       "Agree" = "#91bfdb",
       "Strongly_Agree" = "#4575b4"), 
      breaks = c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree"),  # << desired legend order
-  labels = c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree")
+  labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree")
 ) +
   theme_classic() +
   labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
@@ -558,7 +581,9 @@ ggplot(df_long, aes(x = PercentSigned, y = Group, fill = Rating)) +
     legend.position = "top",
     legend.text = element_text(color = "black", size = 10),
     axis.text = element_text(color = "black", size = 10)
-  )
+  )+
+  scale_x_continuous(limits = c(-100, 100), breaks = seq(-100, 100, by = 50))+
+                theme(text=element_text(size=12, family = "Times New Roman"))
   
   
   
@@ -582,6 +607,8 @@ table(both$Q10, both$exp10)
 
 #yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural under supervision.
 both$Q10 <- factor(both$Q10, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+both$prepost <- factor(both$prepost) 
+both$prepost <- relevel(both$prepost, ref = "pre")
 model <- polr(Q10~ prepost, data = both, Hess=TRUE)
 ctable <- coef(summary(model))
 p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
@@ -599,6 +626,8 @@ table(both$Q11, both$prepost)
 
 #yes significant: After training on the model, students were much more likely to feel confident performing a bovine epidural unsupervised.
 both$Q11 <- factor(both$Q11, levels = c("Strongly disagree", "Somewhat disagree", "Neither agree or disagree", "Somewhat agree", "Strongly agree"), ordered = TRUE)
+both$prepost <- factor(both$prepost) 
+both$prepost <- relevel(both$prepost, ref = "pre")
 model <- polr(Q11~ prepost, data = both, Hess=TRUE)
 ctable <- coef(summary(model))
 p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
@@ -765,12 +794,12 @@ exp(cbind(OR = coef(model), ci))
 
 ```{r}
 df <- data.frame(
-  Group = c("Q10a", "Q11a", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17"),
-  Strongly_Disagree = c(0, 0, 4, 0, 0, 0, 0, 0),
-  Disagree = c(5, 2, 13, 4, 4, 9, 2, 2),
-  Neutral = c(6, 9, 33, 36, 35, 4, 9, 7),
-  Agree = c(36, 42, 30, 38, 36, 42, 34, 29),
-  Strongly_Agree = c(53, 47, 20, 22, 25, 45, 55, 62)
+  Group = c("Q10", "Q11", "Q10a", "Q11a", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17"),
+  Strongly_Disagree = c(0, 0, 0, 0, 4, 0, 0, 0, 0, 0),
+  Disagree = c(0, 5, 5, 2, 13, 4, 4, 9, 2, 2),
+  Neutral = c(0, 7, 6, 9, 33, 36, 35, 4, 9, 7),
+  Agree = c(13, 62, 36, 42, 30, 38, 36, 42, 34, 29),
+  Strongly_Agree = c(87, 26, 53, 47, 20, 22, 25, 45, 55, 62)
 )
 
 df_long <- df |> 
@@ -782,18 +811,21 @@ df_long$Rating <- factor(df_long$Rating,
 
 ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
   geom_bar(stat = "identity", position = "stack", color = "black") +
-      geom_text(aes(label = Percentage),
+      geom_text(
+             aes(label = ifelse(Percentage > 0, Percentage, "")),
             position = position_stack(vjust = 0.5), 
-            color = "black", size = 4) + 
+            color = "black", size = 4, 
+            family = "Times New Roman") + 
   scale_fill_brewer(palette = "Blues", direction = -1,
-                    labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"), 
-                     guide = guide_legend(nrow = 1)) +  
+                    labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"), 
+                     guide = guide_legend(nrow = 1, reverse = TRUE)) +  
   labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
   theme_classic()+
-  theme (legend.position = "none", 
+  theme (legend.position = "top", 
          legend.direction = "horizontal", 
               axis.text = element_text(color = "black", size=10), 
-               legend.text = element_text(color = "black", size=10))
+               legend.text = element_text(color = "black", size=10))+
+                theme(text=element_text(size=12, family = "Times New Roman"))
 
 
 
