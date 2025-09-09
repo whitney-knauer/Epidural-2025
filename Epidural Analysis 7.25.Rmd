@@ -42,6 +42,7 @@ library(fuzzyjoin)
 library(lubridate)
 library(data.table)
 library(extrafont)
+
 ```
 
 ```{r}
@@ -239,6 +240,30 @@ table(s1$Q11)
 #Q12: When learning a new practical task or skill, the chance to perform that task or skill on a model enhances the learning process.
 table(s1$Q12)
 
+#student experience little bar chart: 
+
+df <- data.frame(
+  Group = c("None", "Observed", "Performed"),
+  event = c(54, 37, 21))
+ 
+df$Group <- factor(df$Group, levels = c("None", "Observed", "Performed"))
+
+df |> 
+  ggplot(aes(x = Group, y = event, fill = Group))+
+  geom_bar(stat= "identity")+
+  geom_text(aes(label = paste0(round(event, 1), "%")), 
+            vjust = -0.5, size = 4) +
+  scale_fill_manual(values = c(
+      "None" = "grey30",
+      "Observed" = "gold3",
+      "Performed" = "red4"))+
+  theme_classic() +
+  labs(x = NULL, 
+       y = "Self Reported Prior Experience (%)")+
+    scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 20))+
+  theme(legend.position = "none", 
+        text = element_text(family = "Arial", size = 14))
+
 
 
 ```
@@ -269,8 +294,8 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
             aes(label = ifelse(Percentage > 0, Percentage, "")),
             position = position_stack(vjust = 0.5), 
             color = "black", size = 4, 
-            family = "Times New Roman") + 
-  scale_fill_brewer(palette = "Blues", direction = -1,
+            family = "Arial") + 
+ scale_fill_brewer(palette = "Reds", direction = 1,
                     labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"), 
                      guide = guide_legend(nrow = 1, reverse = TRUE)) +  
   labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
@@ -279,7 +304,7 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
          legend.direction = "horizontal", 
               axis.text = element_text(color = "black", size=10), 
                legend.text = element_text(color = "black", size=10))+
-                theme(text=element_text(size=12, family = "Times New Roman"))
+                theme(text=element_text(size=10, family = "Arial"))
 
 
 
@@ -371,17 +396,17 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
              aes(label = ifelse(Percentage > 0, Percentage, "")),
             position = position_stack(vjust = 0.5), 
             color = "black", size = 4, 
-            family = "Times New Roman") + 
-  scale_fill_brewer(palette = "Blues", direction = -1,
-                    labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"), 
-                     guide = guide_legend(nrow = 1)) +  
+            family = "Arial") + 
+  scale_fill_brewer(palette = "Reds", direction = 1,
+                    labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"), 
+                     guide = guide_legend(nrow = 1, reverse=TRUE)) +  
   labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
   theme_classic()+
-  theme (legend.position = "none", 
+  theme (legend.position = "top", 
          legend.direction = "horizontal", 
               axis.text = element_text(color = "black", size=10), 
                legend.text = element_text(color = "black", size=10))+
-                theme(text=element_text(size=12, family = "Times New Roman"))
+                theme(text=element_text(size=12, family = "Arial"))
  
 
 
@@ -563,15 +588,9 @@ ggplot(df_long, aes(x = PercentSigned, y = Group, fill = Rating)) +
   geom_text(aes(label = ifelse(Percentage > 0, Percentage, "")),
             position = position_stack(vjust = 0.5),
             size = 3, color = "black", 
-            family = "Times New Roman")  +
-  scale_fill_manual(
-    values = c(
-      "Strongly_Disagree" = "#d73027",
-      "Disagree" = "#fc8d59",
-      "Neutral" = "#cccccc",
-      "Agree" = "#91bfdb",
-      "Strongly_Agree" = "#4575b4"), 
-     breaks = c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree"),  # << desired legend order
+            family = "Arial")  +
+  scale_fill_brewer(palette = "Reds", direction = -1, 
+     limits = c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree"),  # << desired legend order
   labels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree")
 ) +
   theme_classic() +
@@ -583,7 +602,7 @@ ggplot(df_long, aes(x = PercentSigned, y = Group, fill = Rating)) +
     axis.text = element_text(color = "black", size = 10)
   )+
   scale_x_continuous(limits = c(-100, 100), breaks = seq(-100, 100, by = 50))+
-                theme(text=element_text(size=12, family = "Times New Roman"))
+                theme(text=element_text(size=12, family = "Arial"))
   
   
   
@@ -815,8 +834,8 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
              aes(label = ifelse(Percentage > 0, Percentage, "")),
             position = position_stack(vjust = 0.5), 
             color = "black", size = 4, 
-            family = "Times New Roman") + 
-  scale_fill_brewer(palette = "Blues", direction = -1,
+            family = "Arial") + 
+  scale_fill_brewer(palette = "Reds", direction = 1,
                     labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"), 
                      guide = guide_legend(nrow = 1, reverse = TRUE)) +  
   labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
@@ -825,7 +844,7 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
          legend.direction = "horizontal", 
               axis.text = element_text(color = "black", size=10), 
                legend.text = element_text(color = "black", size=10))+
-                theme(text=element_text(size=12, family = "Times New Roman"))
+                theme(text=element_text(size=12, family = "Arial"))
 
 
 
