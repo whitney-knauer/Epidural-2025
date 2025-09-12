@@ -244,7 +244,7 @@ table(s1$Q12)
 
 df <- data.frame(
   Group = c("None", "Observed", "Performed"),
-  event = c(54, 37, 21))
+  event = c(54, 24, 21))
  
 df$Group <- factor(df$Group, levels = c("None", "Observed", "Performed"))
 
@@ -262,7 +262,7 @@ df |>
        y = "Self Reported Prior Experience (%)")+
     scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 20))+
   theme(legend.position = "none", 
-        text = element_text(family = "Arial", size = 14))
+        text = element_text(family = "Arial", size = 12))
 
 
 
