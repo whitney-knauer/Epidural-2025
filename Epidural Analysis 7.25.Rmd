@@ -764,9 +764,13 @@ p1 <- ggplot(df_agree, aes(x = PercentSigned, y = Group, fill = Rating)) +
   theme_classic() +
   theme(
     legend.position = "top",
-    text = element_text(size = 10, family = "Times New Roman"))+
-    scale_y_discrete(labels = function(x) stringr::str_wrap(x, width = 40)) +
-theme(axis.text.y = element_text(size = 10),
+    text = element_text(size = 9, color = "black", family = "Times New Roman"))+
+  theme(
+  text = element_text(size = 9, family = "Times New Roman"),
+  axis.text.x = element_text(color = "black", size = 9),
+  axis.text.y = element_text(color = "black", size = 9))+
+    scale_y_discrete(labels = function(x) stringr::str_wrap(x, width = 75)) +
+theme(axis.text.y = element_text(size = 9),
   plot.margin = margin(5, 5, 5, 0))
 
 
@@ -796,8 +800,8 @@ p2 <- ggplot(df_neutral, aes(x = PercentSigned, y = Group, fill = Rating)) +
     axis.title.x = element_blank(),
     axis.text.y = element_blank(),  
     axis.ticks.y = element_blank(), 
-    text = element_text(size = 10, family = "Times New Roman")
-  )
+    axis.text.x = element_text(color="black", size=9, family = "Times New Roman"),
+    text = element_text(size = 10, family = "Times New Roman"))
 
 # Combine plots side by side
 p1 + p2 + plot_layout(widths = c(3.5, 1))
