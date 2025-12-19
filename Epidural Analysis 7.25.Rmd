@@ -42,6 +42,7 @@ library(fuzzyjoin)
 library(lubridate)
 library(data.table)
 library(extrafont)
+library(patchwork)
 
 ```
 
@@ -270,6 +271,8 @@ df |>
 
 ### Stacked Bar Charts for S1 only (Q10,11,12)
 
+#### First
+
 ```{r}
 
 df <- data.frame(
@@ -307,6 +310,78 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
                 theme(text=element_text(size=10, family = "Arial"))
 
 
+
+
+
+
+
+```
+
+#### For Pub(?)
+
+```{r}
+df <- data.frame(
+  Group = c("Q10", "Q11", "Q12"),
+  Strongly_Disagree = c(9, 59, 0),
+  Disagree = c(27, 16, 0),
+  Neutral = c(9, 4, 0),
+  Agree = c(27, 14, 21),
+  Strongly_Agree = c(28, 7, 79)
+)
+
+df_long <- df |> 
+  pivot_longer(cols = -Group, names_to = "Rating", values_to = "Percentage")
+
+df_long$Group <- factor(df_long$Group, levels = rev(df$Group))  
+df_long$Rating <- factor(df_long$Rating, 
+                         levels = rev(c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree")))
+
+df_long <- df_long |>
+  dplyr::mutate(
+    Group = dplyr::recode(Group,
+                   "Q10" = "Confident Supervised",
+                   "Q11" = "Confident Unsupervised",
+                   "Q12" = "A model enhances learning"))
+
+df_long$Group <- factor(
+  df_long$Group,
+  levels = c("A model enhances learning",
+             "Confident Unsupervised",
+             "Confident Supervised"))
+
+rating_colors <- c(
+  "Strongly_Disagree" = "#d47264",
+  "Disagree"          = "#f6d6c2",
+  "Neutral"           = "#ededed",
+  "Agree"             = "#cde1ec",
+  "Strongly_Agree"    = "#8ec1da")
+
+scale_fill_manual(
+  values = rating_colors,
+  labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"),
+  guide = guide_legend(nrow = 1, reverse = TRUE))
+
+
+ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
+  geom_bar(stat = "identity", position = "stack", color = "black") +
+      geom_text(
+            aes(label = ifelse(Percentage > 0, Percentage, "")),
+            position = position_stack(vjust = 0.5), 
+            color = "black", size = 3.5, 
+            family = "Times New Roman") + 
+ scale_fill_manual(values = rating_colors,
+                    labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"), 
+                     guide = guide_legend(nrow = 1, reverse = TRUE)) +  
+  labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
+  theme_classic()+
+  theme (legend.position = "top", 
+         legend.direction = "horizontal", 
+              axis.text = element_text(color = "black", size=10), 
+               legend.text = element_text(color = "black", size=9))+
+                theme(text=element_text(size=10, family = "Times New Roman"))+
+    scale_y_discrete(labels = function(x) stringr::str_wrap(x, width = 35)) +
+theme(axis.text.y = element_text(size = 9),
+  plot.margin = margin(5, 5, 5, 0))
 
 
 
@@ -606,12 +681,129 @@ ggplot(df_long, aes(x = PercentSigned, y = Group, fill = Rating)) +
   
   
   
-  
+
   
   
 
 
 ```
+
+#### Option 3
+
+```{r}
+
+df <- data.frame(
+  Group = c("Q10 pre", "Q10 post", "Q11 pre", "Q11 post"),
+  Strongly_Disagree = c(4, 0, 52, 0),
+  Disagree = c(29, 0, 17, 4),
+  Neutral = c(12, 0, 6, 8),
+  Agree = c(23, 10, 17, 62),
+  Strongly_Agree = c(33, 90, 8, 27)
+)
+
+# Reshape long
+df_long <- df %>% 
+  pivot_longer(cols = -Group, names_to = "Rating", values_to = "Percentage") %>%
+  mutate(
+    Rating = factor(Rating, levels = c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree")),
+    Group = factor(Group, levels = rev(unique(Group))))
+
+df_long <- df_long |>
+  dplyr::mutate(
+    Group = dplyr::recode(Group,
+                   "Q10 pre" = "PRE - Confident Supervised",
+                   "Q10 post" = "POST - Confident Supervised",
+                   "Q11 pre" = "PRE - Confident Unsupervised", 
+                   "Q11 post" = "POST - Confident Unsupervised"))
+
+df_long$Group <- factor(
+  df_long$Group,
+  levels = rev(c("PRE - Confident Supervised",
+             "POST - Confident Supervised",
+             "PRE - Confident Unsupervised",
+             "POST - Confident Unsupervised")))
+
+rating_colors <- c(
+  "Strongly_Disagree" = "#d47264",
+  "Disagree"          = "#f6d6c2",
+  "Neutral"           = "#ededed",
+  "Agree"             = "#cde1ec",
+  "Strongly_Agree"    = "#8ec1da")
+
+scale_fill_manual(
+  values = rating_colors,
+  labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"),
+  guide = guide_legend(nrow = 1))
+
+
+
+# Separate datasets
+df_agree <- df_long %>% filter(Rating != "Neutral") %>%
+  mutate(PercentSigned = case_when(
+    Rating %in% c("Strongly_Disagree", "Disagree") ~ -Percentage,
+    TRUE ~ Percentage))
+
+df_neutral <- df_long %>% filter(Rating == "Neutral") %>%
+  mutate(PercentSigned = Percentage)
+
+# Plot agreement/disagreement
+p1 <- ggplot(df_agree, aes(x = PercentSigned, y = Group, fill = Rating)) +
+  geom_bar(stat = "identity", position = "stack", color = "black") +
+  geom_text(aes(
+    label = ifelse(Percentage >= 1, Percentage, "")),
+    position = position_stack(vjust = 0.5),
+    size = 3, 
+    color = "black", 
+    family = "Times New Roman") +
+  scale_fill_manual(
+    values = rating_colors,
+    labels = rev(c("Strongly Agree", "Agree", "Disagree", "Strongly Disagree")), 
+    guide = guide_legend(nrow = 1)) +
+  scale_x_continuous(limits = c(-100, 100), breaks = seq(-100, 100, by = 50)) +
+  labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
+  theme_classic() +
+  theme(
+    legend.position = "top",
+    text = element_text(size = 10, family = "Times New Roman"))+
+    scale_y_discrete(labels = function(x) stringr::str_wrap(x, width = 40)) +
+theme(axis.text.y = element_text(size = 10),
+  plot.margin = margin(5, 5, 5, 0))
+
+
+
+
+
+
+
+
+
+
+# Plot neutral
+p2 <- ggplot(df_neutral, aes(x = PercentSigned, y = Group, fill = Rating)) +
+  geom_bar(stat = "identity", color = "black") +
+    geom_text(aes(label = ifelse(PercentSigned >= 1, PercentSigned, "")),
+            position = position_stack(vjust = 0.5),       
+            color = "black",  
+            size = 3, 
+            family = "Times New Roman") +  
+  scale_fill_manual(values = "#ededed") +
+  scale_x_continuous(limits = c(0, 50), breaks = c(0, 50), minor_breaks = NULL) +
+  theme_classic() +
+  theme(
+    legend.position = "top", 
+    legend.title = element_blank(),
+    axis.title.y = element_blank(), 
+    axis.title.x = element_blank(),
+    axis.text.y = element_blank(),  
+    axis.ticks.y = element_blank(), 
+    text = element_text(size = 10, family = "Times New Roman")
+  )
+
+# Combine plots side by side
+p1 + p2 + plot_layout(widths = c(3.5, 1))
+```
+
+"
 
 ### Models
 
@@ -811,6 +1003,8 @@ exp(cbind(OR = coef(model), ci))
 
 ### Stacked Bar Chart
 
+#### First
+
 ```{r}
 df <- data.frame(
   Group = c("Q10", "Q11", "Q10a", "Q11a", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17"),
@@ -845,6 +1039,93 @@ ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
               axis.text = element_text(color = "black", size=10), 
                legend.text = element_text(color = "black", size=10))+
                 theme(text=element_text(size=12, family = "Arial"))
+
+
+
+
+
+
+```
+
+#### For Pub (?)
+
+```{r}
+df <- data.frame(
+  Group = c("Q10", "Q11", "Q10a", "Q11a", "Q12", "Q13", "Q14", "Q15", "Q16", "Q17"),
+  Strongly_Disagree = c(0, 0, 0, 0, 4, 0, 0, 0, 0, 0),
+  Disagree = c(0, 5, 5, 2, 13, 4, 4, 9, 2, 2),
+  Neutral = c(0, 7, 6, 9, 33, 36, 35, 4, 9, 7),
+  Agree = c(13, 62, 36, 42, 30, 38, 36, 42, 34, 29),
+  Strongly_Agree = c(87, 26, 53, 47, 20, 22, 25, 45, 55, 62)
+)
+
+df_long <- df |> 
+  pivot_longer(cols = -Group, names_to = "Rating", values_to = "Percentage")
+
+df_long$Group <- factor(df_long$Group, levels = rev(df$Group))  
+df_long$Rating <- factor(df_long$Rating, 
+                         levels = rev(c("Strongly_Disagree", "Disagree", "Neutral", "Agree", "Strongly_Agree")))
+
+
+df_long <- df_long |>
+  dplyr::mutate(
+    Group = dplyr::recode(Group,
+                   "Q10" = "Confident Supervised",
+                   "Q11" = "Confident Unsupervised",
+                   "Q10a" = "Epidural model is a useful tool", 
+                   "Q11a" = "Model has reinforced prior learning",
+                   "Q12" = "Model has duplicated prior learning",
+                   "Q13" = "Range of manual dexterity has improved", 
+                   "Q14" = "Manual dexterity skills have improved",
+                   "Q15" = "Received sufficient feedback from instructor",
+                   "Q16" = "Model has improved confidence", 
+                   "Q17" = "Model has helped build valuable skills"))
+
+df_long$Group <- factor(
+  df_long$Group,
+  levels = rev(c(      "Confident Supervised",
+                   "Confident Unsupervised",
+                   "Epidural model is a useful tool", 
+                   "Model has reinforced prior learning",
+                   "Model has duplicated prior learning",
+                   "Range of manual dexterity has improved", 
+                   "Manual dexterity skills have improved",
+                   "Received sufficient feedback from instructor",
+                   "Model has improved confidence", 
+                   "Model has helped build valuable skills")))
+
+rating_colors <- c(
+  "Strongly_Disagree" = "#d47264",
+  "Disagree"          = "#f6d6c2",
+  "Neutral"           = "#ededed",
+  "Agree"             = "#cde1ec",
+  "Strongly_Agree"    = "#8ec1da")
+
+scale_fill_manual(
+  values = rating_colors,
+  labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"),
+  guide = guide_legend(nrow = 1, reverse = TRUE))
+
+ggplot(df_long, aes(x = Percentage, y = Group, fill = Rating)) +
+  geom_bar(stat = "identity", position = "stack", color = "black") +
+      geom_text(
+             aes(label = ifelse(Percentage > 0, Percentage, "")),
+            position = position_stack(vjust = 0.5), 
+            color = "black", size = 3.5, 
+            family = "Times New Roman") +  
+  scale_fill_manual(values = rating_colors,
+                    labels = c("Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"), 
+                     guide = guide_legend(nrow = 1, reverse = TRUE)) +  
+  labs(x = "Percentage of Respondents (%)", y = "", fill = "") +
+  theme_classic()+
+  theme (legend.position = "top", 
+         legend.direction = "horizontal", 
+              axis.text = element_text(color = "black", size=9), 
+               legend.text = element_text(color = "black", size=8))+
+                theme(text=element_text(size=9, family = "Times New Roman"))+
+  scale_y_discrete(labels = function(x) stringr::str_wrap(x, width = 35)) +
+theme(axis.text.y = element_text(size = 8),
+  plot.margin = margin(5, 5, 5, 0))
 
 
 
